@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pywavelearing',
-    version='0.0',
+    version='0.1',
     author='Caio Stringari',
     author_email='Caio.EadiStringari@uon.edu.ay',
     packages=find_packages(),
@@ -17,6 +17,8 @@ setup(
         'scikit-image',
         # 'cv2', # not on pip =[
         'colour',
-        'colorspacious'
+        'colorspacious',
+        'seaborn',
+        'matplotlib'
     ],
 )
