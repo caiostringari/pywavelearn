@@ -5,7 +5,7 @@ This repository bring useful tools for coastal scientists to handle common nears
 
 For example, to detect wave breaking:
 
-[include gif]
+![Alt text] (doc/image/predict_wavebreaking.gif)
 
 # pwl.image
 The module "image" brings functions to manipulate video data, rectify images based on GCPs, calibrate virtually any video camera, and extract timestacks.
