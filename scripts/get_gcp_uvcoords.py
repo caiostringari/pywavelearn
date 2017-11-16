@@ -8,17 +8,10 @@
 # EMAIL    : Caio.EadiStringari@uon.edu.au
 #
 # V1.0     : 01/08/2016 [Caio Stringari]
-#
-# OBSERVATIONS  : This script has python3 compatibility only
+# V1.1     : 16/11/2017 [Caio Stringari]
 #
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
-#
-#
-#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Global imports
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # system
 import os
@@ -30,12 +23,12 @@ import argparse
 # Files
 from glob import glob
 
-# Numpy
+# numpy
 import numpy as np
 
-# skimage
-import skimage.io
+# image processing
 import cv2
+import skimage.io
 
 # Matplotlib
 import matplotlib.pyplot as plt
@@ -43,44 +36,7 @@ import matplotlib.pyplot as plt
 # I/O
 from pandas import DataFrame
 
-from videotools import camera_parser
-
-
-def crop(I,cropfile='crop.txt'):
-    """
-    Crop image based on a "crop" file. The crop file is a text file with 3 lines:
-    first line is True or False, second indicates crop in U and third the crop in V.
-    For example: crop.txt
-    True
-    400:1200
-    300:900
-
-    ----------
-    Args:
-        I [Mandatory (np.ndarray)]: image array. Use cv or skimage to read the file
-
-        cropfile [Optional (str)]: filename of the crop file
-    ----------
-        Returns:
-        I [ (np.ndarray)]: Croped array
-    """
-
-    # Crop the image
-    f = open(cropfile,"r").readlines()
-    for line in f:
-        line = line.strip("\n")
-        if line == "True":
-            crp = True
-            break
-        else:
-            crp = False
-    if crp:
-        u1 = int(f[1].split(":")[0])
-        u2 = int(f[1].split(":")[1])
-        v1 = int(f[2].split(":")[0])
-        v2 = int(f[2].split(":")[1])
-        I = I[v1:v2, u1:u2]
-    return I
+from pywavelearning.image import camera_parser
 
 
 def onclick(event):
@@ -102,7 +58,7 @@ def onclick(event):
 
 if __name__ == '__main__':
 
-    print ("\n ### Extracting UV GCP Coordinates ### \n")
+    print ("\nExtracting UV GCP Coordinates\n")
 
     ### Argument parser
     parser = argparse.ArgumentParser()
@@ -114,19 +70,6 @@ if __name__ == '__main__':
                         dest = 'input',
             			help = "Filename or folder with frames with a good view of the GCPs.",
             			required = True)
-    # Crop file
-    parser.add_argument('--crop','-c',
-                        nargs = 1,
-                        action = 'store',
-                        dest = 'crop',
-            			help = "Text file containg the crop limits.",
-            			required = True)
-    # Undistort flag
-    parser.add_argument('--undistort','-u',
-                        action = 'store_true',
-                        dest = 'undistort',
-            			help = "Use this option to undistort images based on camera-matrix file.",
-            			required = False)
     # Camera matrix
     parser.add_argument('--camera-matrix','-cm',
                         nargs = 1,
@@ -157,7 +100,9 @@ if __name__ == '__main__':
     # Parser
     args = parser.parse_args()
 
-    # Files and Folders
+    # can't use "def main():" for this script, it does not work with on_click() =[
+
+    # files and Folders
     isfolder = os.path.isdir(args.input[0])
 
     if isfolder:
@@ -167,119 +112,95 @@ if __name__ == '__main__':
     else:
         jpg = args.input[0]
 
-    # Number of GCPS
+    # number of GCPS
     ngcps = int(args.gcps[0])
 
-    # Undistort
-    undistort = args.undistort
+    # camera matrix
+    cm = args.camera[0]
+    if os.path.isfile(cm):
+        K,DC = camera_parser(cm)
+    else:
+        raise IOError("Cannot fint the camera-matrix file.")
 
-    # Camera-Matrix
-    if undistort:
-        try:
-            cm = args.camera[0]
-            if os.path.isfile(cm):
-                K,DC = camera_parser(cm)
-        except:
-            raise #IOError("If undistort is passed, the user must indicate the camera-matrix file.")
-
-    # Crop file
-    fcrop = os.path.abspath(args.crop[0])
-
-
+    # folder case
     if isfolder:
+
+        # intiate
         U = []
         V = []
-        # coords = []
         for jpg in files:
             coords = []
-
             # read the frame
             I = skimage.io.imread(jpg)
             h, w = I.shape[:2]
-
             # if undistort is true, undistort
-            if undistort:
-                Kn,roi = cv2.getOptimalNewCameraMatrix(K,DC,(w,h),1,(w,h))
-                I = cv2.undistort(I, K, DC, None, Kn)
-            # crop
-            I = crop(I,fcrop)
-
-            # GUI
+            Kn,roi = cv2.getOptimalNewCameraMatrix(K,DC,(w,h),1,(w,h))
+            I = cv2.undistort(I, K, DC, None, Kn)
+            # Start GUI
             fig,ax = plt.subplots(figsize=(20,20))
             ax.set_aspect('equal')
             skimage.io.imshow(I,ax=ax)
             # call click func
             cid = fig.canvas.mpl_connect('button_press_event', onclick)
             # show the figure
-            plt.show()
-            # close the figure for good
-            # fig.canvas.mpl_disconnect(cid)
+            plt.show()            
             plt.close()
-
+            # append to output
             U.append(coords[0][0])
             V.append(coords[0][1])
-
-        # DataFrame
+        # output 
         U = np.array(U).astype(int)
         V = np.array(V).astype(int)
         df = DataFrame(np.vstack([U,V]).T.astype(int),columns=["u","v"])
-
-        # GCP names - Same order as the mouse clicks
+        # update names in the same order as the clicks
         gcps = []
         for i in range(len(df.index.values)):
             gcps.append("GCP {}".format(str(i+1).zfill(2)))
-        # Updated dataframe
+        # updated dataframe
         df.index = gcps
         df.index.name = "GCPs"
-
         # print the dataframe on screen
+        print ("\n")
         print (df)
-
-        # Save the dataframe
+        # dump to .csv
         df.to_csv(args.output[0])
+
+    # single image case
     else:
         coords = []
         # read the frame
         I = skimage.io.imread(jpg)
         h, w = I.shape[:2]
-
-        # if undistort is true, undistort
-        if undistort:
-            Kn,roi = cv2.getOptimalNewCameraMatrix(K,DC,(w,h),1,(w,h))
-            I = cv2.undistort(I, K, DC, None, Kn)
-        # crop
-        I = crop(I,fcrop)
-
-        # GUI
+        # undistort
+        Kn,roi = cv2.getOptimalNewCameraMatrix(K,DC,(w,h),1,(w,h))
+        I = cv2.undistort(I, K, DC, None, Kn)
+        # start  GUI
         fig,ax = plt.subplots(figsize=(20,20))
         ax.set_aspect('equal')
         skimage.io.imshow(I,ax=ax)
-        # call click func
         cid = fig.canvas.mpl_connect('button_press_event', onclick)
         # show the figure
         plt.show()
-
         # GCP names
         gcps=[]
         for k in np.arange(len(coords))+1:
             gcps.append("GCP {}".format(str(k).zfill(2)))
-
-        # DataFrame
-        # U = np.array(U).astype(int)
-        # V = np.array(V).astype(int)
+        # create a dataframe
         df = DataFrame(np.array(coords).astype(int),columns=["u","v"])
         df.index = gcps
         df.index.name = "GCPs"
-        print (df)
-
-        # GCP names - Same order as the mouse clicks
+        # # update names in the same order as the clicks
         gcps = []
         for i in range(len(df.index.values)):
             gcps.append("GCP {}".format(str(i+1).zfill(2)))
-        # Updated dataframe
+        # updated dataframe
         df.index = gcps
         df.index.name = "GCPs"
-        # Save the dataframe
+
+        print ('\n')
+        print (df)
+        
+        # dump to csv
         df.to_csv(args.output[0])
 
     # plot the final result
@@ -287,17 +208,18 @@ if __name__ == '__main__':
         fig,ax = plt.subplots(figsize=(20,20))
         ax.set_aspect('equal')
         skimage.io.imshow(I)
-        # Scatter the GCPS
+        # scatter the GCPS
         plt.scatter(df.u.values,df.v.values,s=40,c="r",marker="+",linewidths=2)
-        # Plot the GCPS names
+        # plot the GCPS names
         for x,y,gcp in zip(df.u.values,df.v.values,gcps):
             t = plt.text(x+30,y,gcp,color="k",fontsize=10)
             t.set_bbox(dict(facecolor=".5",edgecolor="k",alpha=0.85,linewidth=1))
-        # Axis
+        # set axes
         plt.ylim(I.shape[0],0)
         plt.xlim(0,I.shape[1])
         plt.tight_layout
-        # Show the plot
+        # show the plot
         plt.show()
+        plt.close()
 
-    print ("\n{} completed, my work is done !\n".format(sys.argv[0]))
+    print ("\nMy work is done!\n")

@@ -226,55 +226,8 @@ def ismultimodal(x, xgrid, bandwidth=0.1,threshold=0.1,plot=False,**kwargs):
     return multimodal,npeaks
 
 
-
-
-### Main calls ###
-if __name__ == '__main__':
-
+def main():
     print ("\nSpliting data in stationary intervals relative to tides, please wait...\n")
-
-    ### Argument parser
-    parser = argparse.ArgumentParser()
-
-    # Input data
-    parser.add_argument('--input','-i',
-                        nargs = 1,
-                        action = 'store',
-                        dest = 'input',
-                        help = "Input data path with converted netCDF files.",
-                        required = True)
-    # Output data
-    parser.add_argument('--output','-o',
-                        nargs = 1,
-                        action = 'store',
-                        dest = 'output',
-                        help = "Output file name (with no extension).",
-                        required = True)
-    # Output frequency
-    parser.add_argument('--output-frequency','-f',
-                        nargs = 1,
-                        action = 'store',
-                        dest = 'ofreq',
-                        default = [5],
-                        help = "Output frequency in minutes. Default is 5 minutes",
-                        required = False)
-    # Time interval of the analysis
-    parser.add_argument( '--dt','-dt',
-                        nargs = 1,
-                        action = 'store',
-                        dest = 'dt',
-                        default = [60],
-                        help = "Time interval for tide computation. Default is 60 minutes.",
-                        required = False)
-    # plots
-    parser.add_argument( '--plot','-plot',
-                        action = 'store_true',
-                        dest = 'plot',
-                        help = "Plot all stationary timeseries.",
-                        required = False)
-    # parser
-    args = parser.parse_args()
-
 
     ### Input ###
     inp = args.input[0]
@@ -336,8 +289,53 @@ if __name__ == '__main__':
         fig.tight_layout()
         plt.savefig(figname,dpi=300)
         plt.show()
+    print ("\nMy work is done!\n".)
 
 
+if __name__ == '__main__':
+
+    # Argument parser
+    parser = argparse.ArgumentParser()
+
+    # Input data
+    parser.add_argument('--input','-i',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'input',
+                        help = "Input data path with converted netCDF files.",
+                        required = True)
+    # Output data
+    parser.add_argument('--output','-o',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'output',
+                        help = "Output file name (with no extension).",
+                        required = True)
+    # Output frequency
+    parser.add_argument('--output-frequency','-f',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'ofreq',
+                        default = [5],
+                        help = "Output frequency in minutes. Default is 5 minutes",
+                        required = False)
+    # Time interval of the analysis
+    parser.add_argument( '--dt','-dt',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'dt',
+                        default = [60],
+                        help = "Time interval for tide computation. Default is 60 minutes.",
+                        required = False)
+    # plots
+    parser.add_argument( '--plot','-plot',
+                        action = 'store_true',
+                        dest = 'plot',
+                        help = "Plot all stationary timeseries.",
+                        required = False)
+    # parser
+    args = parser.parse_args()
 
 
-    print ("\nScript {} has just finished. My work is done!\n".format(sys.argv[0]))
+    # main call
+    main()

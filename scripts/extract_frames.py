@@ -8,31 +8,19 @@
 # EMAIL    : Caio.EadiStringari@uon.edu.au
 #
 # v1.0     : 25/07/2016 [Caio Stringari]
-# v1.1     : 05/08/2015 [Caio Stringari]
+# v1.1     : 05/08/2016 [Caio Stringari]
+# v1.2     : 16/11/2017 [Caio Stringari]
 #
-# OBSERVATIONS  : The script is smart enough to pull metadata out of the input file,
-#                 however, it not always work. Be carefull !
+# OBS      : The script is smart enough to pull metadata out of the input file,
+#            however, it not always work. Be carefull !
 #
-# EXAMPLES:
-#
-# For usage help call:  python extract_frames.py -h
-#
-# 1 - Extract all frames in the video VIDEO.MP4 the folder "frames/" using 4 cores. Output frequency as 5Hz
-# python extract_frames --nproc 4 -i VIDEO.MP4 -o frames/ --freq 5
-# 2 - Same as example 1 but force a start date
-# python extract_frames --nproc 4 -i VIDEO.MP4 -o frames/ --freq 5 --force-date 20160101-06:30:00
+# USAGE    : python extract_frames.py -n 4 -i 'path/to/video/video.mp4' -f 2 -o myframes/ -f 2
 #
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
-#
-#
-#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Global imports
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # python 3
-from __future__ import print_function,division
+from __future__ import print_function, division
 
 # system
 import os
@@ -52,14 +40,11 @@ import numpy as np
 import multiprocessing as mp
 from multiprocessing import Queue
 
-# Ordered dict
-from collections import OrderedDict
-
-# User tools
-from videotools import metadata_parser,chunkify
+from pywavelearning.utils import chunkify
+from pywavelearning.image import metadata_parser
 
 
-def image_worker(num,frames,times,seeks):
+def image_worker(num,fi,fpath,frames,times,seeks,fbreak):
     """
     Worker function passed to multiprocessing.Process(). Will do most of
     the heavy lifting: open the video, extrac the frames and save the output.
@@ -76,7 +61,6 @@ def image_worker(num,frames,times,seeks):
 
     ----------
     Returns:
-
     """
 
     name = mp.current_process().name
@@ -85,11 +69,11 @@ def image_worker(num,frames,times,seeks):
 
     print ("    +",name, ' starting')
 
-    # Loop over the files in the chunk
+    # loop over the files in the chunk
     k = 0
     for frame,time,seek in zip(frames,times,seeks):
 
-        print ("      --> Processing frame for :",time,"[Worker {}]".format(num)," <--")
+        print ("      --> Processing frame for :",time,"[Worker {}]".format(num))
 
         seek1 = seek.split(".")[0]
         seek2 = "00:00:00."+seek.split(".")[1]
@@ -108,16 +92,122 @@ def image_worker(num,frames,times,seeks):
 
     return
 
+def main():
+
+    # starting things
+    start = datetime.datetime.now()
+    print ("\nVideo processing starting at : {} \n".format(datetime.datetime.now()))
+
+    # force breaker
+    if args.force_break:
+        fbreak = np.int(args.force_break[0])
+    else:
+        fbreak = False
+
+    # frames folder
+    fpath = args.output[0]
+    subprocess.call("rm -rf {}".format(fpath),shell=True)
+    os.makedirs(fpath)
+
+    # input file
+    fi = args.input[0]
+    if os.path.isfile(fi):
+        pass
+    else:
+        raise IOError("File {} not found !".format(fi))
+
+    # number of processors
+    nprocs = int(args.nproc[0])
+
+    # output frequency
+    freq = int(args.freq[0]) # in HZ !
+
+    # get metadata
+    metadata = metadata_parser(fi)
+
+    # frames per second
+    if args.force_fps[0]:
+        fps = int(args.force_fps[0])
+    else:
+        fps = int(metadata["ExposureTime"].split('/')[1])
+
+    # sampling frequencies
+    fs = 1/fps # sample frequency in seconds
+    fhz = 1/fs # sample frequency in hertz
+
+
+    # step between the recording frequency and the output frequency
+    if freq > fhz:
+        raise IOError("Output frequency cannot be greater than the aquisition frequency.")
+    step = int(fhz/freq)
+
+    # total lenght in seconds
+    if args.force_duration[0] == True:
+        hours = np.int(args.force_duration[0].split(":")[0])
+        minutes = np.int(args.force_duration[0].split(":")[1])
+        seconds = np.int(args.force_duration[0].split(":")[2])
+    else:
+        hours = np.int(metadata["Duration"].split(":")[0])
+        minutes = np.int(metadata["Duration"].split(":")[1])
+        seconds = np.int(metadata["Duration"].split(":")[2])
+
+    t0 = datetime.datetime(2000,1,1,0,0) # random reference time
+    t1 = t0+datetime.timedelta(hours=hours,minutes=minutes,seconds=seconds)
+    duration = np.int((t1-t0).total_seconds())+1
+
+    # total number of frames
+    nframes = duration*fps
+
+    # video original start date
+    if args.force_date[0]:
+        fmt = "%Y%m%d %H:%M:%S"
+        vd_start = datetime.datetime.strptime(args.force_date[0],fmt)
+    else:
+        fmt = "%Y:%m:%d %H:%M:%S"
+        vd_start = datetime.datetime.strptime(metadata["DateTimeOriginal"].split("+")[0],fmt)
+
+    # frames to be processed
+    frames = np.arange(0,nframes,step)
+
+    ### get time of each frame
+    times = []
+    seeks = []
+    for i in range(len(frames)):
+        now = vd_start+datetime.timedelta(seconds=i*(duration/(len(frames))))
+        seek = t0+datetime.timedelta(seconds=i*(duration/(len(frames))))
+        # append to the arrays
+        times.append(now)
+        seeks.append(seek.strftime("%H:%M:%S.%f"))
+
+    # create the groups
+    gframes = chunkify(frames,nprocs)
+    gtimes = chunkify(times,nprocs)
+    gseeks = chunkify(seeks,nprocs)
+
+    # loop over the number of processors
+    Q = mp.Queue()
+    procs = []
+    for i,wframes,wtimes,wseeks in zip(range(nprocs),gframes,gtimes,gseeks):
+        p = mp.Process(target=image_worker, args=(i+1,fi,fpath,wframes,wtimes,wseeks,fbreak))
+        procs.append(p)
+        p.start()
+
+    # wait for all worker processes to finish
+    for p in procs:
+        p.join()
+
+    end = datetime.datetime.now()
+
+    elapsed = (end-start).total_seconds()
+    print ("\nElapsed time: {} seconds [{} minutes] ({} hours) \n".format(elapsed,round(elapsed/60,2),round(elapsed/3600.,2)))
+    print ("\nVideo processing finished at : {} ###\n".format(datetime.datetime.now()))
+
 if __name__ == '__main__':
 
-    # Insert main working folder in the PATH
-    #sys.path.insert(0,"/home/caio/Documents/PhD/Tools/")
-
-
-    ### Argument parser
+    # Argument parser
     parser = argparse.ArgumentParser()
 
-    # Number of cores to use
+    # Number of process to use
     parser.add_argument('--nproc','-n',
                         nargs = 1,
                         action = 'store',
@@ -132,7 +222,6 @@ if __name__ == '__main__':
                         dest = 'input',
                         required = True,
                         help = "Video file full path. Must be a file format supported by ffmpeg.",)
-
     # Step
     parser.add_argument('--freq','-f',
                         nargs = 1,
@@ -186,114 +275,6 @@ if __name__ == '__main__':
     # parse all the arguments
     args = parser.parse_args()
 
-    # starting things
-    start = datetime.datetime.now()
-    print ("\n #### Video processing starting at : {} ###\n".format(datetime.datetime.now()))
+    # main calls
+    main()
 
-    ### Input and Output ###
-
-    # force breaker
-    if args.force_break:
-        fbreak = np.int(args.force_break[0])
-    else:
-        fbreak = False
-
-    # frames folder
-    fpath = args.output[0]
-    subprocess.call("rm -rf {}".format(fpath),shell=True)
-    os.makedirs(fpath)
-
-    # input file
-    fi = args.input[0]
-    if os.path.isfile(fi):
-        pass
-    else:
-        raise IOError("File {} not found !".format(fi))
-
-    ### Number of processors
-    nprocs = int(args.nproc[0])
-
-    ### Output frequency
-    freq = int(args.freq[0]) # in HZ !
-
-    ### Get metadata
-    metadata = metadata_parser(fi)
-    # print (metadata["Duration"])
-
-    # frames per second
-    if args.force_fps[0]:
-        fps = int(args.force_fps[0])
-    else:
-        fps = int(metadata["ExposureTime"].split('/')[1])
-
-    # Sampling frequencies
-    fs = 1/fps # sample frequency in seconds
-    fhz = 1/fs # sample frequency in hertz
-
-
-    # Step between the recording frequency and the output frequency
-    if freq > fhz:
-        raise IOError("Output frequency cannot be greater than the aquisition frequency.")
-    step = int(fhz/freq)
-
-    # Total lenght in seconds
-    if args.force_duration[0] == True:
-        hours = np.int(args.force_duration[0].split(":")[0])
-        minutes = np.int(args.force_duration[0].split(":")[1])
-        seconds = np.int(args.force_duration[0].split(":")[2])
-    else:
-        hours = np.int(metadata["Duration"].split(":")[0])
-        minutes = np.int(metadata["Duration"].split(":")[1])
-        seconds = np.int(metadata["Duration"].split(":")[2])
-
-    t0 = datetime.datetime(2000,1,1,0,0) # random reference time
-    t1 = t0+datetime.timedelta(hours=hours,minutes=minutes,seconds=seconds)
-    duration = np.int((t1-t0).total_seconds())+1
-
-    # Total number of frames
-    nframes = duration*fps
-
-    # Video Original start date
-    if args.force_date[0]:
-        fmt = "%Y%m%d %H:%M:%S"
-        vd_start = datetime.datetime.strptime(args.force_date[0],fmt)
-    else:
-        fmt = "%Y:%m:%d %H:%M:%S"
-        vd_start = datetime.datetime.strptime(metadata["DateTimeOriginal"].split("+")[0],fmt)
-
-    # Frames to be processed
-    frames = np.arange(0,nframes,step)
-
-    ### Get time of each frame
-    times = []
-    seeks = []
-    for i in range(len(frames)):
-        now = vd_start+datetime.timedelta(seconds=i*(duration/(len(frames))))
-        seek = t0+datetime.timedelta(seconds=i*(duration/(len(frames))))
-        # append to the arrays
-        times.append(now)
-        seeks.append(seek.strftime("%H:%M:%S.%f"))
-
-    ### Create the groups
-    gframes = chunkify(frames,nprocs)
-    gtimes = chunkify(times,nprocs)
-    gseeks = chunkify(seeks,nprocs)
-
-    ### Loop over the number of processors
-    Q = mp.Queue()
-    procs = []
-    for i,wframes,wtimes,wseeks in zip(range(nprocs),gframes,gtimes,gseeks):
-        # print (i+1, gframes, gstarts)
-        p = mp.Process(target=image_worker, args=(i+1,wframes,wtimes,wseeks))
-        procs.append(p)
-        p.start()
-
-    # Wait for all worker processes to finish
-    for p in procs:
-        p.join()
-
-    end = datetime.datetime.now()
-
-    elapsed = (end-start).total_seconds()
-    print ("\n Elapsed time: {} seconds [{} minutes] ({} hours) \n".format(elapsed,round(elapsed/60,2),round(elapsed/3600.,2)))
-    print ("\n #### Video processing finished at : {} ###\n".format(datetime.datetime.now()))

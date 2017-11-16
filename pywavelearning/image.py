@@ -33,7 +33,6 @@ def pixel_window(a, i, j, iwin=8, jwin=8):
 
          J (Mandatory [np.array]): surrounding pixels in the j-direction.
     """
-    import numpy as np
 
     # compute domain
     i = np.arange(i-iwin,i+iwin+1,1)

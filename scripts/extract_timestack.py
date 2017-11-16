@@ -2,99 +2,286 @@
 #------------------------------------------------------------------------
 #
 #
-# SCRIPT   : windowed_stack.py
-# POURPOSE : Created a "windowed" timestack array
+# SCRIPT   : extract_windowed_timestack.py [
+# POURPOSE : Extract a timestack considering pixel surroundings
 # AUTHOR   : Caio Eadi Stringari
 # EMAIL    : Caio.EadiStringari@uon.edu.au
 #
-# V1.0     : 06/09/2017 [Caio Stringari]
+# v1.0     : 06/09/2016 [Caio Stringari]
 #
-# OBSERVATIOS:
+# EXAMPLES:
+#
+# For usage help call:  python extract_timestack.py -h
+#
 #
 #------------------------------------------------------------------------
 #------------------------------------------------------------------------
-#
-#
-#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Global imports
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 from __future__ import print_function,division
 
-# OS
+# system
 import os
 import sys
+import subprocess
 
-# dates
-import datetime
+# warnings
+import warnings
 
-# arguments
+# Files
+from glob import glob
+
+# Arguments
 import argparse
 
+# Dates
+import datetime
 
-# numpy, pandas and xarray
+# numpy
 import numpy as np
 import pandas as pd
-import xarray as xr
 
 # scipy
 import scipy.spatial
+from scipy.stats import mode
 
-# Image I/O
+
+# multiprocess
+import multiprocessing as mp
+from multiprocessing import Queue
+
+# random numbers
+import random
+
+# strings
+import string
+
+# netcdf IO
+import xarray
+
+# scikit image
 import cv2
 import skimage.io
 
-# errors
-from sklearn.metrics import mean_squared_error
-from skimage.morphology import disk
+# local tools
+import pywavelearning.image as ipwl
+from pywavelearning.utils import chunkify
 
-# Matplotlib
-import matplotlib.pyplot as plt
 
-# videotools
-from videotools import (camera_parser,
-                        find_homography,
-                        rectify_image,
-                        find_horizon_offset,
-                        rotate_translate,
-                        _construct_rgba_vector,
-                        crop,autocrop)
+def rectify_worker(num,frames):
+    """
+    Worker function passed to multiprocessing.Process(). This function:
+     - reads a list of frames, loop over its elements;
+     - undistort each frame using the camera matrix;
+     - crop the edges;
+     - rectify (project) the geometry to real-world coordinates;
+     - calculate the horizon;
+     - rotate the matrix;
+     - extract the red, green and blue pixel arrays;
+     - save the data in netcdf4 format.
 
-from collections import OrderedDict
+    ----------
+    Args:
+        num [Mandatory (int)]: Number of the process being called.
 
-#### Defintions
+        frames [Mandatory (list)]: List of frames to process.
+
+    ----------
+    Returns:
+
+    """
+
+    name = mp.current_process().name
+
+    # print ("Worker",num)
+
+    print ("    + Worker ",num, ' starting')
+
+    N = len(frames)
+
+    # If
+
+    # Loop over the files in the chunk
+    k = 0
+    for frame in frames:
+        percent = round(((k*100)/N),2)
+        print ("      --> Processing frame {} of {} ({} %) [Worker {}]".format(k+1,N,percent,num)," <--")
+
+        # time
+        fmt = "%Y%m%d_%H%M%S_%f"
+        now = datetime.datetime.strptime(frame.split("/")[-1].strip(".jpg"),fmt)
+
+        # Read image
+        Ir = skimage.io.imread(frame)
+        h,  w = Ir.shape[:2]
+
+        # undistort image
+        Kn,roi = cv2.getOptimalNewCameraMatrix(K,DC,(w,h),1,(w,h))
+        Ir = cv2.undistort(Ir, K, DC, None, Kn)
+
+        # homography
+        H = ipwl.find_homography(UV, XYZ, K, z=z, distortion=0)
+
+        # rectify coordinates
+        X,Y = ipwl.rectify_image(Ir, H)
+
+        # find the horizon limits
+        horizon = ipwl.find_horizon_offset(X, Y, max_distance=hor)
+
+        # rotate and translate
+        Xr, Yr = ipwl.rotate_translate(X, Y, rotation=theta, translation=[xt,yt])
+
+        # final arrays
+        Xc = Xr[horizon:,:]
+        Yc = Yr[horizon:,:]
+        Ic = Ir[horizon:,:,:]
+
+        # new image dimensions
+        hc, wc = Ic.shape[:2]
+
+        # flattened coordinates
+        XYc = np.dstack([Xc.flatten(),Yc.flatten()])[0]
+
+        # interp = False
+        # interpolate to a regular grid
+
+        # do KDTree in the cliped array
+        IDXc = kdtree(XYc,points)
+
+        # points in metric coordinates - cliped array
+        xc = XYc[IDXc,0]
+        yc = XYc[IDXc,1]
+
+        # points in pixel coordinates - cliped array
+        ic = np.unravel_index(IDXc,Xr.shape)[0]
+        jc = np.unravel_index(IDXc,Yr.shape)[1]
+
+        # create a line of pixel centers
+        i_stack_center = np.linspace(ic[0],ic[1],np.int(args.stackpoints[0])).astype(np.int).tolist()
+        j_stack_center = np.linspace(jc[0],jc[1],np.int(args.stackpoints[0])).astype(np.int).tolist()
+
+        # pixel centes in metric coordinates
+        x_stack_center = Xc[i_stack_center,j_stack_center]
+        y_stack_center = Yc[i_stack_center,j_stack_center]
+
+        R = []
+        G = []
+        B = []
+        # loop over pixel centers
+        for i,j in zip(i_stack_center,j_stack_center):
+            # find surrounding pixels
+            isurrounding,jsurrounding = pixel_window(Ic,i,j,pxwin)
+            # final pixel arrays
+            iall = np.hstack([isurrounding,i])
+            jall = np.hstack([jsurrounding,j])
+            # extract pixel stats
+            if pxstats == "mean":
+                r = Ic[iall,jall,0].mean();
+                g = Ic[iall,jall,1].mean();
+                b = Ic[iall,jall,2].mean();
+            elif pxstats == "max":
+                r = Ic[iall,jall,0].max();
+                g = Ic[iall,jall,1].max();
+                b = Ic[iall,jall,2].max();
+            elif pxstats == "min":
+                r = Ic[iall,jall,0].min();
+                g = Ic[iall,jall,1].min();
+                b = Ic[iall,jall,2].min();
+            elif pxstats == "mode":
+                r = mode(Ic[iall,jall,0])[0][0]
+                g = mode(Ic[iall,jall,1])[0][0]
+                b = mode(Ic[iall,jall,2])[0][0]
+            # Append to output
+            R.append(r)
+            G.append(g)
+            B.append(b)
+        # Final RGB array
+        RGB = np.vstack([R,G,B]).astype(np.int).T
+
+        # build the output data model
+        ds = xarray.Dataset()
+        # write rgb variable
+        ds['rgb'] = (('points','bands'),  RGB) # All bandas
+        # write positional cooridinates
+        ds['x'] = x_stack_center # x-coordinate
+        ds['y'] = y_stack_center # y-coordinate
+        ds["i"] = i_stack_center # central i-coordinate
+        ds["j"] = j_stack_center # central j-coordinate
+        # write coordinates
+        ds.coords['time'] = now # camera time
+        ds.coords["points"] = np.arange(0,len(i_stack_center),1)
+        # auxiliary variables
+        ds["bands"] = ["red","green","blue"]
+        # write to file
+        ds.to_netcdf("{}/{}.nc".format(tmpfolder,now.strftime(fmt)))
+
+        k+=1
+        if fbreak and k == fbreak:
+            print ("++> Breaking loop")
+            break
+    print ("    - Worker",num, ' finishing')
+
+    return
+
+def mergestacks(files,ncout='pts.nc',ramcut=3.0):
+    """
+    Merge extracted pixel lines in a timestack. Only will be called
+    if parameter --timestack is True. Will always merge files in the
+    temporal "time" dimension.
+
+    ----------
+    Args:
+        files [Mandatory (list, np.ndarray)]: Sorted list of files to merge.
+
+        ncout [Optional (str)]: Output filename. Defaul is timestack.nc
+
+        ramcut [Optinal (float)]: Max fraction of memory to use. If the size of
+        the expected merged file exceds this fraction will raise a MemoryError.
+
+    ----------
+    Returns:
+    """
+    def process_one_path(path):
+        # use a context manager, to ensure the file gets closed after use
+        with xarray.open_dataset(path) as ds:
+            # load dataset into memory
+            ds.load()
+            return ds
+
+    # Memory check
+    f_bytes = sum(os.path.getsize(f) for f in glob("tmp/*.nc"))
+    m_bytes = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+    if f_bytes >= m_bytes/ramcut:
+        raise MemoryError("Not enough memory available to merge all files.")
+
+    print ("\n    + Merging timestacks, please wait...")
+
+    # # progressbar
+    # widgets = [ progressbar.FormatLabel(''),
+    #             progressbar.Percentage(),
+    #             ' ', progressbar.Bar(marker='#', left='[', right=']'),
+    #             ' ', progressbar.ETA()]
+    # bar = progressbar.ProgressBar(widgets=widgets,max_value=len(files))
+    # bar.start()
+
+    # Loop over files
+    datasets = []
+    for k,fname in enumerate(files):
+        datasets.append(process_one_path(fname))
+        # widgets[0] = progressbar.FormatLabel('      Stack {} of {}'.format(k+1,len(files)))
+        # bar.update(k)
+        # if k>100:break
+    merged = xarray.concat(datasets, "time")
+    merged.to_netcdf(ncout)
+    merged.close()
+
+    subprocess.call("rm -rf tmp/",shell=True)
+
+    print ("\n    - Stacks sucessfully merged")
+
 
 def kdtree(A,pt):
     _,indexes = scipy.spatial.KDTree(A).query(pt)
     return indexes
-
-# def _onclick(event):
-#     global ix, iy
-#     ix, iy = event.xdata, event.ydata
-#     # assign global variable to access outside of function
-#     global coords
-#     coords.append((ix, iy))
-#     # Disconnect after 2 clicks
-#     if len(coords) == 2:
-#         fig.canvas.mpl_disconnect(cid)
-#         plt.close(1)
-#     return
-
-def surrounding_pixels(i,j,k=1):
-
-    i1,j1 = i-k,j+k
-    i2,j2 = i,j+k
-    i3,j3 = i+k,j+k
-    i4,j4 = i+k,j
-    i5,j5 = i+k,j-k
-    i6,j6 = i,j-k
-    i7,j7 = i-k,j-k
-    i8,j8 = i-k,j
-
-    I = [i1,i2,i3,i4,i5,i6,i7,i8]
-    J = [j1,j2,j3,j4,j5,j6,j7,j8]
-
-    return I,J
 
 def pixel_window(a,i,j,s=8):
     
@@ -125,62 +312,97 @@ def pixel_window(a,i,j,s=8):
 
     return Ifinal,Jfinal
 
+def random_string(n):
+   return ''.join(random.choice(string.ascii_lowercase) for i in range(n))
 
 if __name__ == '__main__':
+
 
     ### Argument parser
     parser = argparse.ArgumentParser()
 
-    # input Frame
-    parser.add_argument('--frame','-i',
+    # Number of cores to use
+    parser.add_argument('--nproc','-n',
                         nargs = 1,
                         action = 'store',
-                        dest = 'frame',
-                        required = True,
-                        help = "Input frame.",)
-    # crop file
-    parser.add_argument('--crop','-crop',
+                        default = [1],
+                        dest = 'nproc',
+                        required = False,
+                        help = "Number of processors to use. Default is to use one.",)
+    # Input frame folder
+    parser.add_argument('--input','-i',
                         nargs = 1,
                         action = 'store',
-                        dest= 'crop',
+                        dest = 'input',
                         required = True,
-                        help = "crop file.",)
-    # geometry
-    parser.add_argument('--gcpxyz','-gcpxyz','--xyz','-xyz',
+                        help = "Folder with the extracted frames. Please use extrac_frames.py before running this script.")
+    # output
+    parser.add_argument('--output','-o',
                         nargs = 1,
                         action = 'store',
-                        dest= 'xyzfile',
-                        required = True,
-                        help = "GCP XYZ file.",)
+                        default = ['output.nc'],
+                        dest = 'output',
+                        required = False,
+                        help = "Output file name.",)
+    # Geometry
     parser.add_argument('--gcpuv','-gcpuv','--uv','-uv',
                         nargs = 1,
                         action = 'store',
                         dest= 'uvfile',
                         required = True,
                         help = "GCP UV file. Use get_gcp_uvcoords.py to generate a valid file.",)
-    # pressure transducer line
-    parser.add_argument('--survey','-survey',
+    parser.add_argument('--gcpxyz','-gcpxyz','--xyz','-xyz',
                         nargs = 1,
                         action = 'store',
-                        dest= 'ptfile',
-                        required = False,
-                        default = [None],
-                        help = "Pressure transducer survey. Use include_pts.py to generate a valid file.",)
-    # number of points in the stack
-    parser.add_argument('--stack-points','-stkp',
+                        dest= 'xyzfile',
+                        required = True,
+                        help = "GCP XYZ file. Similar to UV file, but with real-world coordinates instead",)
+    # Horizon
+    parser.add_argument('--horizon','--hor','-horizon','-hor',
                         nargs = 1,
                         action = 'store',
-                        default = [np.int(300)],
-                        dest = 'stackpoints',
+                        dest = 'horizon',
                         required = False,
-                        help = "Number of points in the timestack.",)
-    # camera matrix
+                        default = [1000],
+                        help = "Maximum distance from origin to be included in the plot.",)
+    # Theta
+    parser.add_argument('--theta','-theta',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'theta',
+                        required = False,
+                        default = [0],
+                        help = "Rotation angle. Default is 0.0.",)
+    # Translation
+    parser.add_argument('--X','--x','-X','-x',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'X',
+                        required = False,
+                        default = [0],
+                        help = "Translation in the x-direction",)
+    parser.add_argument('--Y','--y','-Y','-y',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'Y',
+                        required = False,
+                        default = [0],
+                        help = "Translation in the x-direction",)
+    # Projeciton height
+    parser.add_argument('--Z','--z','-Z','-z',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'Z',
+                        required = False,
+                        default = [0],
+                        help = "Real-world elevation on which the image should be projected",)
+    # Camera matrix
     parser.add_argument('--camera-matrix','-cm',
                         nargs = 1,
                         action = 'store',
                         dest = 'camera',
-                        required = False,
-                        help = "Camera matrix file. Only used if undistort is True. Please use calibrate.py to generate a valid file.",)
+                        required = True,
+                        help = "Camera matrix file. Please use calibrate.py to generate a valid file.",)
     # pixel line coordinates
     parser.add_argument('-x1',
                         nargs = 1,
@@ -206,46 +428,15 @@ if __name__ == '__main__':
                         dest = 'y2',
                         required = False,
                         help = "Final y-coordinate for the timestack. If passed WILL NOT use matplotlib GUI..",)
-    # horizon
-    parser.add_argument('--horizon','--hor','-horizon','-hor',
+    # Number of points in the stack
+    parser.add_argument('--stack-points','-stkp',
                         nargs = 1,
                         action = 'store',
-                        dest = 'horizon',
+                        default = [np.int(300)],
+                        dest = 'stackpoints',
                         required = False,
-                        default = [1000],
-                        help = "Maximum distance from origin to be included in the plot.",)
-    # Projeciton height
-    parser.add_argument('--Z','--z','-Z','-z',
-                        nargs = 1,
-                        action = 'store',
-                        dest = 'Z',
-                        required = False,
-                        default = [0],
-                        help = "Real-world elevation on which the image should be projected",)
-    # Rotation
-    parser.add_argument('--theta','-theta',
-                        nargs = 1,
-                        action = 'store',
-                        dest = 'theta',
-                        required = False,
-                        default = [0],
-                        help = "Rotation angle. Default is 0.0.",)
-    # Translation
-    parser.add_argument('--X','--x','-X','-x',
-                        nargs = 1,
-                        action = 'store',
-                        dest = 'X',
-                        required = False,
-                        default = [0],
-                        help = "Translation in the x-direction",)
-    parser.add_argument('--Y','--y','-Y','-y',
-                        nargs = 1,
-                        action = 'store',
-                        dest = 'Y',
-                        required = False,
-                        default = [0],
-                        help = "Translation in the x-direction",)
-    # Pixel window
+                        help = "Number of points in the timestack.",)
+    # Pixel window size
     parser.add_argument('--pixel-window','--pxwin','-pxwin','-win',
                         nargs = 1,
                         action = 'store',
@@ -253,184 +444,171 @@ if __name__ == '__main__':
                         required = False,
                         default = [2],
                         help = "Pixel window size. Default is 2.",)
-
+    # Statistic
+    parser.add_argument('--pixel-statistic','--statistic','-stats',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'pxstats',
+                        required = False,
+                        default = ["mean"],
+                        help = "Pixel statistics to use. Default is the average.",)
+    # Whether to save frames or not
+    parser.add_argument('--save-frames',
+                        action = 'store_true',
+                        dest = 'save_frames',
+                        required = False,
+                        help = "Save rectified frames in netcdf format. Default is false",)
+    # Frame output path
+    parser.add_argument('--frame-output',
+                        nargs = 1,
+                        action = 'store',
+                        default = ['rectified/'],
+                        dest = 'frame_output',
+                        required = False,
+                        help = "Output writing folder. Default is rectified/.",)
+    # Compress
+    parser.add_argument('--compress',
+                        action = 'store_true',
+                        dest = 'compress',
+                        help = "Compress the output folder to save disk space.")
+    # Remove input frames to save space
+    parser.add_argument('--remove-frames',
+                        action = 'store_true',
+                        dest = 'remove_frames',
+                        help = "Delete input frames folder.")
+    # Force video duration
+    parser.add_argument('--force-break',
+                        nargs = 1,
+                        action = 'store',
+                        dest = 'force_break',
+                        required = False,
+                        help = "Force break after N frames.",)
     # parse all the arguments
     args = parser.parse_args()
 
-    img = os.path.isfile(args.frame[0])
-    if img:
-        Ir = skimage.io.imread(args.frame[0])
-        h,  w = Ir.shape[:2]
+
+    ### ...I am not going to mess with this script... ###
+
+    # starting things up
+    start = datetime.datetime.now()
+    print ("\nProcessing starting at : {} ###\n".format(datetime.datetime.now()))
+
+    ### Number of processors ###
+    nprocs = int(args.nproc[0])
+
+    # force breake
+    if args.force_break:
+        fbreak = np.int(args.force_break[0])
     else:
-        raise ValueError("Could not find input frame.")
-  
-    # camera matrix
-    K,DC = camera_parser(args.camera[0])
-    
-    # read XYZ coords
+        fbreak = False
+
+    ### Input and Output ###
+
+    # input
+    ipath = os.path.abspath(args.input[0])
+    if os.path.isdir(ipath):
+        pass
+    else:
+        raise IOError("Path {} not found !".format(ipath))
+
+    # all frames
+    files = np.sort(glob(ipath+"/*.jpg"))
+
+    # output
+    nc = args.output[0]
+
+    # output
+    if args.save_frames:
+        keep=True
+        opath = os.path.abspath(args.frame_output[0])
+        subprocess.call("rm -rf {}".format(opath),shell=True)
+        os.makedirs(opath)
+    else:
+        keep=False
+
+    # temporary folder
+    tmpfolder = 'tmp_'+random_string(8)+'/'
+    subprocess.call("mkdir {}".format(tmpfolder),shell=True)
+
+    # Camera matrix
+    K,DC = ipwl.camera_parser(args.camera[0])
+
+    # Read XYZ coords
     dfxyz = pd.read_csv(args.xyzfile[0])
     XYZ = dfxyz[["x","y","z"]] .values
 
-    gcp_x = XYZ[0,0]
-    gcp_y = XYZ[0,1]
-
-    # read UV coords
+    # Read UV coords
     dfuv = pd.read_csv(args.uvfile[0])
     UV = dfuv[["u","v"]].values
 
-    # read pressure transducer coordinates
-    if args.ptfile[0]:
-        PTS = True
-        df = pd.read_csv(args.ptfile[0]).dropna(subset=["x_rotated"])
-        xy_pts = df[["x_rotated","y_rotated"]].values
-
-    # horizon
+    # Horizon
     hor = float(args.horizon[0])
 
-    # rotation Angle
+    # Rotation Angle
     theta = float(args.theta[0])
 
-    # translations
+    # Projection height
+    z = float(args.Z[0])
+
+    # Translation
     xt = float(args.X[0])
     yt = float(args.Y[0])
 
-    # projection height
-    z = float(args.Z[0])
+    # Pixel window size
+    pxwin = np.int(args.pxwin[0])
 
-    # create a timestack line
+    # Pixel stats
+    pxstats = args.pxstats[0]
+
+    # Homography
+    H = ipwl.find_homography(UV, XYZ, K,z=z)
+
+    # Chunkify
+    fchunks = chunkify(files,nprocs)
+
+    # Create timestack line
     if args.x1 and args.x2 and args.y1 and args.y2:
         xstack = [np.float(args.x1[0]),np.float(args.x2[0])]
         ystack = [np.float(args.y1[0]),np.float(args.y2[0])]
         points = np.vstack([xstack,ystack]).T
+        npoints = np.int(args.stackpoints[0])
     else:
         raise ValueError("Sorry, GUI was removed...")
 
-    # pixel window size
-    pxwin = np.int(args.pxwin[0])
 
-    # undistort image
-    Kn,roi = cv2.getOptimalNewCameraMatrix(K,DC,(w,h),1,(w,h))
-    Ir = cv2.undistort(Ir, K, DC, None, Kn)
+    ### Loop over the number of processors
+    Q = mp.Queue()
+    procs = []
+    for i,frames in zip(range(nprocs),fchunks):
+        # print (i+1, gframes, gstarts)
+        p = mp.Process(target=rectify_worker, args=(i+1,frames))
+        procs.append(p)
+        p.start()
+    # Wait for all worker processes to finish
+    for p in procs:
+        p.join()
 
-    # read crop file and crop frame
-    Ir = crop(Ir,os.path.abspath(args.crop[0]))
+    # merge all extracted stacks to one netcdf
+    mergestacks(np.sort(glob("{}*.nc".format(tmpfolder))),args.output[0])
 
-    # homography
-    H = find_homography(UV, XYZ, K, z=z, distortion=0)
+    # remove temporary folder
+    subprocess.call("rm -rf {}".format(tmpfolder),shell=True)
 
-    # rectify coordinates
-    X,Y = rectify_image(Ir, H)
+    # compress
+    if keep:
+        if args.compress:
+            print ("\nCompressing files, please wait...")
+            tar = opath.split("/")[-1]+".tar.gz"
+            cmd = "tar -zcvf {} {}/*.nc > /dev/null 2>&1".format(tar,os.path.relpath(opath))
+            subprocess.call(cmd,shell=True)
+            subprocess.call("rm -rf {}".format(opath),shell=True)
 
-    # find the horizon limits
-    horizon = find_horizon_offset(X, Y, max_distance=hor)
+    # delete input files
+    if args.remove_frames:
+        subprocess.call("rm -rf {}".format(ipath),shell=True)
 
-    # rotate and translate
-    Xr, Yr = rotate_translate(X, Y, rotation=theta, translation=[xt,yt])
+    end = datetime.datetime.now()
 
-    # final arrays
-    Xc = Xr[horizon:,:]
-    Yc = Yr[horizon:,:]
-    Ic = Ir[horizon:,:,:]
-
-    # new image dimensions
-    hc, wc = Ic.shape[:2]
-
-    # flattened coordinates
-    XYc = np.dstack([Xc.flatten(),Yc.flatten()])[0]
-
-    interp = False
-    # interpolate to a regular grid
-
-    # do KDTree in the cliped array
-    IDXc = kdtree(XYc,points)
-
-    # points in metric coordinates - cliped array
-    xc = XYc[IDXc,0]
-    yc = XYc[IDXc,1]
-
-    # points in pixel coordinates - cliped array
-    ic = np.unravel_index(IDXc,Xr.shape)[0]
-    jc = np.unravel_index(IDXc,Yr.shape)[1]
-
-    # create a line of pixel centers
-    i_stack_center = np.linspace(ic[0],ic[1],np.int(args.stackpoints[0])).astype(np.int).tolist()
-    j_stack_center = np.linspace(jc[0],jc[1],np.int(args.stackpoints[0])).astype(np.int).tolist()
-
-    # pixel centes in metric coordinates
-    x_stack_center = Xc[i_stack_center,j_stack_center]
-    y_stack_center = Yc[i_stack_center,j_stack_center]
-
-    
-    I = []
-    J = []
-    R = []
-    G = []
-    B = []
-    # loop over pixel centers
-    for i,j in zip(i_stack_center,j_stack_center):
-        # find surrounding pixels
-        isurrounding,jsurrounding = pixel_window(Ic,i,j,pxwin)
-        # final pixel arrays
-        iall = np.hstack([isurrounding,i])
-        jall = np.hstack([jsurrounding,j])
-        # extract pixel stats
-        r = Ic[iall,jall,0].mean();R.append(r)
-        g = Ic[iall,jall,1].mean();G.append(g)
-        b = Ic[iall,jall,2].mean();B.append(b)
-        # apppend for plotting
-        for val in isurrounding: I.append(val)
-        for val in jsurrounding: J.append(val)
-    # Final RGB array
-    RGB = np.vstack([R,G,B]).astype(np.int).T
-
-    # find surrounding pixels in metric coordinates
-    Xpixels = Xc[I,J]
-    Ypixels = Yc[I,J]
-
-    # Do a KDtree for surveyed locations
-    IDXs = kdtree(XYc,xy_pts)
-    # points in metric coordinates - cliped array
-    xpts = XYc[IDXs,0]
-    ypts = XYc[IDXs,1]
-    # points in pixel coordinates - cliped array
-    ipts = np.unravel_index(IDXs,Xr.shape)[0]
-    jpts = np.unravel_index(IDXs,Yr.shape)[1]
-
-    # # build the output data model
-    # ds = xr.Dataset()
-    # # write rgb variable
-    # ds['rgb'] = (('points','bands'),  RGB) # All bandas
-    # # write positional cooridinates
-    # ds['x'] = ('points', x_stack_center) # x-coordinate
-    # ds['y'] = ('points', y_stack_center) # y-coordinate
-    # ds["i"] = ('points', i_stack_center) # central i-coordinate
-    # ds["j"] = ('points', j_stack_center) # central j-coordinate
-    # # write coordinates
-    # ds.coords['time'] = datetime.datetime.now() # camera time
-    # ds.coords["points"] = np.arange(0,len(i_stack_center),1)
-    # # auxiliary variables
-    # ds["bands"] = (('bands'),["red","green","blue"])
-    # # ds["indexes"] = (('points'), IDXc)
-    # # write to file
-    # # ds.to_netcdf("{}/{}.nc".format(tmpfolder,now.strftime(fmt)))
-
-    # plot
-    fig, (ax1,ax2) = plt.subplots(1,2,figsize=(10,10))
-    # pixel coords
-    ax1.imshow(Ic)
-    ax1.scatter(J,I,20,facecolor="darkgreen",edgecolor="k",lw=1)
-    ax1.scatter(j_stack_center,i_stack_center,50,facecolor="deepskyblue",edgecolor="w",lw=1)
-    ax1.scatter(jc,ic,50,facecolor="orangered",edgecolor="k",lw=1)
-    ax1.scatter(jpts,ipts,50,color="red",marker="+",lw=2)
-    # metric coords
-    im = ax2.pcolormesh(Xc,Yc,Ic.mean(axis=2))
-    im.set_array(None); im.set_edgecolor('none')
-    im.set_facecolor(_construct_rgba_vector(Ic, n_alpha=0))
-    ax2.scatter(Xpixels,Ypixels,20,facecolor="darkgreen",edgecolor="k",lw=1)
-    ax2.scatter(x_stack_center,y_stack_center,50,facecolor="deepskyblue",edgecolor="w",lw=1)
-    ax2.scatter(xstack,ystack,50,facecolor="orangered",edgecolor="k",lw=1,label="Input")
-    ax2.scatter(xpts,ypts,50,color="red",marker="+",lw=2,label="Surveyd")
-    ax2.set_xlim(xstack[0]-100,xstack[-1]+100)
-    ax2.set_ylim(ystack[0]-100,ystack[-1]+100)
-    ax2.legend()
-    plt.show()
+    elapsed = (end-start).total_seconds()
+    print ("\nElapsed time: {} seconds [{} minutes] ({} hours) \n".format(elapsed,round(elapsed/60,2),round(elapsed/3600.,2)))
+    print ("\nRectification finished at : {} \n".format(datetime.datetime.now()))
