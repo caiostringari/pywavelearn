@@ -1,11 +1,9 @@
 # PyWaveLearning
 Machine Learning in Wave Science
 
-This repository bring useful tools for coastal scientists to handle common nearshore data types with special focus on machine learning.
+This repository bring useful tools for coastal scientists to handle common nearshore data types with special focus on machine learning. For example, to detect wave breaking:
 
-For example, to detect wave breaking:
-
-![Alt text] (doc/image/predict_wavebreaking.gif)
+![breaking](doc/image/predict_wavebreaking.gif)
 
 # pwl.image
 The module "image" brings functions to manipulate video data, rectify images based on GCPs, calibrate virtually any video camera, and extract timestacks.
@@ -20,35 +18,35 @@ The module “linear” brings implementations of some linear wave theory equati
 from numpy import pi
 import pywavelearning.linear as pwll
 
-# define water depth
+# define a water depth
 h = 2.0
-# define wave period
+# define a non-dimensional water depth
+p = 1.2
+# define a wave period
 T = 10
-# wave angular frequency
+# wave an angular frequency
 omega = 2*pi/T
 
-# calculates the wave number
+# wave number
 k = pwll.wave_number(omega)
 
-# calculates the wave angular frequency
+# wave angular frequency
 omega  = pwll.frequency(k)
 
-# calculates the wave celerity
+# wave celerity at any depth
 c = pwll.celerity(k,h)
 
-# calculates the group speed
+# wave group speed at any depth
 cg= pwll.group_speed(k,h)
 
-# calculates the dispersion equation
-q = pwll.dispersion(h)
+# dispersion relation for a non-dimensional water depth
+q = pwll.dispersion(p)
 ```
-
 
 # pwl.utils
 The module “utils” gathers commonly used  functions shared among the other modules.
 
 # pwl.spectral and pwl.stats
-
 
 # scripts
 The scripts/ folder brings some cool scripts to make
