@@ -5,6 +5,12 @@ This repository bring useful tools for coastal scientists to handle common nears
 
 ![breaking](doc/image/predict_wavebreaking.gif)
 
+To install:
+```python
+git clone https://github.com/caiostringari/pywavelearning.git
+cd pywavelearning
+sudo python setup.py install
+```
 # pwl.image
 The module "image" brings functions to manipulate video data, rectify images based on GCPs, calibrate virtually any video camera and extract timestacks.
 
@@ -64,9 +70,7 @@ for rgb in snap colours:
 # return to original shape
 L = np.array(labels).reshape(I.shape[0],I.shape[1])
 ```
-
-This functions are the basis for extracting more complicated features from coastal images, such as wave breaking and shoreline evolution.
-
+These functions are the basis for extracting more complicated features from coastal images, such as wave breaking and shoreline evolution.
 
 # pwl.linear
 The module “linear” brings implementations of some linear wave theory equations:
@@ -100,10 +104,14 @@ cg= lpwl.group_speed(k,h)
 q = lpwl.dispersion(p)
 ```
 
+# pwl.spectral and pwl.stats
+TODO: Add docs
+
+# pwl. sensors
+TODO: Add docs
+
 # pwl.utils
 The module “utils” gathers commonly used  functions shared among the other modules.
 
-# pwl.spectral and pwl.stats
-
 # scripts
-The scripts/ folder brings some cool scripts to make
+TODO: Add docs
