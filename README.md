@@ -57,10 +57,12 @@ user_colours = np.vstack([0,0,0],[255,255,255]).T
 colour_labels = [0,1] # zero is black, one is white
 
 # learning step
-labels = cpwl.classify_colour(snap_colours, user_colours, colour_labels)
+labels = []
+for rgb in snap colours:
+  labels.append(cpwl.classify_colour(rgb, user_colours, colour_labels))
 
 # return to original shape
-L = labels.reshape(I.shape[0],I.shape[1])
+L = np.array(labels).reshape(I.shape[0],I.shape[1])
 ```
 
 This functions are the basis for extracting more complicated features from coastal images, such as wave breaking and shoreline evolution.
