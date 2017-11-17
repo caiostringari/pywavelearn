@@ -41,7 +41,30 @@ X,Y = ipwl.rectify_image(I, H)
 ```
 
 # pwl.colour
-The module "colour" was develop to translate coastal images (and timestacks) to the CIECAM2 colourspace and perform machine learning tasks. 
+The module "colour" was develop to translate coastal images (snapshots, timex, variance and timestacks) into the CIECAM2 colourspace and perform some machine learning tasks. For example, calculate classify colours in a snapshot based on well defined target colours:
+
+```python
+import numpy as np
+import skimage.io
+import pywavelearning.colour as cpwl
+
+# read frame
+I = skimage.io.imread("/data/Image/OMB.jpg")
+
+# get color bands
+snap_colours = np.vstack([I[:,:,0].flatten(),I[:,:,1].flatten(),I[:,:,2].flatten()]).T
+user_colours = np.vstack([0,0,0],[255,255,255]).T
+colour_labels = [0,1] # zero is black, one is white
+
+# learning step
+labels = cpwl.classify_colour(snap_colours, user_colours, colour_labels)
+
+# return to original shape
+L = labels.reshape(I.shape[0],I.shape[1])
+```
+
+This functions are the basis for extracting more complicated features from coastal images, such as wave breaking and shoreline evolution.
+
 
 # pwl.linear
 The module “linear” brings implementations of some linear wave theory equations:
