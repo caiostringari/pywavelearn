@@ -1,0 +1,23 @@
+{
+    "data": {
+        "ncin": "/mnt/docs/DataHub/Timestacks/OneMileBeach/20140807-000.nc",
+        "dataout": "./breaking/omb/"
+    },
+    "parameters": {
+        "pixel_metric": "lightness",
+        "breaking_algorithm": "colour",
+        "peak_detection_algorithm": "local_maxima",
+        "pixel_threshold": 0.05,
+        "min_samples": 25,
+        "eps": 0.0015,
+        "gap_value": 130,
+        "resample_rule": "100L",
+        "dbscan_metric":"sqeuclidean",
+        "surf_zone_lims": [15,100],
+        "sand_colour": [195,185,155],
+        "water_colour": [30,75,75],
+        "foam_colour": [255,255,255],
+        "nclicks": 1,
+        "pixel_window": 10
+    }
+}
