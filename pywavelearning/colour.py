@@ -7,7 +7,7 @@ import colour
 from colorspacious import deltaE
 
 # classification
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
 
 
 def get_dominant_colour(df, n_colours=8, force_label_to_white=False):
@@ -90,3 +90,42 @@ def classify_colour(colour, colour_targets, target_labels):
     # classified_label = target_labels[np.argmin(np.abs(dists))]
 
     return sorted_labels
+
+
+def colour_quantization(rgb,ncolours=16):
+    """
+    Reduces the number of distinct colors used in an image, usually with the
+    intention that the new image should be as visually similar as possible to
+    the original image.
+
+    Uses scikit-learn MiniBatchKMeans to the heavy lifiting.
+
+    Defaults to a 16bit image output.
+    ----------
+    Args:
+        rgb (Mandatory [np.array]): Any RGB image array
+
+        ncolours (Optional [int]): Number of colour clusters. Default is 16
+
+
+    ----------
+    Return:
+         rgb (Mandatory [np.array]): quantizatized RGB image array
+    """
+    # get all data in a vector format
+    X = np.vstack([rgb[:,:,0].ravel(), rgb[:,:,1].ravel(), rgb[:,:,2].ravel()]).T
+
+    # fit the model
+    km = MiniBatchKMeans(n_clusters=ncolours, random_state=42)
+    km.fit(X)
+
+    # get new colours
+    rgb_quant = []
+    for label in km.labels_:
+        rgb_center = km.cluster_centers_[int(label)]
+        rgb_quant.append(rgb_center)
+
+    # return to original shape
+    rgb_quant = np.array(rgb_quant).reshape(rgb.shape)
+
+    return rgb_quant
