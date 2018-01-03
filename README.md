@@ -1,50 +1,71 @@
-# PyWaveLearning
-Machine Learning in Wave Science
+# PyWaveLearn
+Machine learning for wave scientists.
 
-This repository bring useful tools for coastal scientists to handle common nearshore data types with special focus on machine learning. For example, to detect wave breaking:
+This repository gathers useful tools for coastal scientists to handle common nearshore data with special focus on data mining,  machine learning, and big data.
+
+For example, hard tasks sush as detecting wave breaking becomes as easy as:
+
+```bash
+python learn_wavebreaking.py
+```
 
 ![breaking](doc/image/predict_wavebreaking.gif)
 
-To install:
+
+# Installation:
+
+PyWaveLearn can only be installed from the source code.
+
+First, make sure you have all the dependencies:
+
+Using conda:
+```bash
+# create a new environment
+conda create --name pwl python=3.6
+# activate
+source activate pwl
+# install the netCDF4 and xarray
+conda install netCDF4 xarray
+# install seaborn for better plots
+conda install seaborn
+# geoprocessing
+conda install -c ioos geopandas
+# colour analysis
+pip install colorspacious
+conda install -c conda-forge colour-science
+# OpenCV
+conda install -c conda-forge opencv
+# science kits
+conda install scikit-image scikit-learn
+# a nice progress bar
+conda install -c conda-forge tqdm
+# peak detection
+pip install peakutils
+```
+
+You may also want ffmpeg and some codecs to process raw video data.
+```bash
+sudo apt-get install ffmpeg ubuntu-restricted-extras
+```
+
+Now, install pywavelearn:
+
 ```python
-git clone https://github.com/caiostringari/pywavelearning.git
-cd pywavelearning
+git clone https://github.com/caiostringari/pywavelearn.git
+cd pywavelearn
 sudo python setup.py install
 ```
+
 # pwl.image
-The module "image" brings functions to manipulate video data, rectify images based on GCPs, calibrate virtually any video camera and extract timestacks.
+The module **image** was designed to make it easier to rectify ARGUS-like
+images using the OpenCV and scikit-image packages. Most of the heavy lifiting is
+done using [Flamingo](http://flamingo-image.readthedocs.io/). This module has
+the companion script [extract_timestack.py](scripts/extract_timestack.py) which
+extracts space-time transects (timestacks) from a set of coastal images and also
+has the option to store rectied frames in a netCDF4 structure suitable for big
+data analysis.
 
-```python
-# Rectify a single frame
-
-import cv2
-import skimage.io
-import pandas as pd
-import pywavelearning.linear as ipwl
-
-# read the camera intrinsic parameters
-K,DC = ipwl.camera_parser("data/Calibration/CameraCalib.txt")
-
-# read frame
-I = skimage.io.imread("/data/Image/OMB.jpg")
-h,  w = I.shape[:2]
-
-# read GCPs coordinates
-XYZ = pd.read_csv("/data/Image/xyz.csv")[["x","y","z"]].values
-
-# read UV coords 
-UV = pd.read_csv("/data/Image/uv.csv")[["u","v"]].values
-
-# undistort frame
-Kn,roi = cv2.getOptimalNewCameraMatrix(K,DC,(w,h),1,(w,h))
-I = cv2.undistort(I, K, DC, None, Kn)
-
-# find homography
-H = ipwl.find_homography(UV, XYZ, K, z=0, distortion=0)
-
-# rectify coordinates
-X,Y = ipwl.rectify_image(I, H)
-```
+Usage examples are available [here](doc/pwl_image.md)
 
 # pwl.colour
 The module "colour" was develop to translate coastal images (snapshots, timex, variance and timestacks) into the CIECAM2 colourspace and perform some machine learning tasks. For example, calculate classify colours in a snapshot based on well defined target colours:
@@ -52,7 +73,7 @@ The module "colour" was develop to translate coastal images (snapshots, timex, v
 ```python
 import numpy as np
 import skimage.io
-import pywavelearning.colour as cpwl
+import PyWaveLearn.colour as cpwl
 
 # read frame
 I = skimage.io.imread("/data/Image/OMB.jpg")
@@ -77,7 +98,7 @@ The module “linear” brings implementations of some linear wave theory equati
 
 ```python
 from numpy import pi
-import pywavelearning.linear as lpwl
+import PyWaveLearn.linear as lpwl
 
 # define a water depth
 h = 2.0
