@@ -65,37 +65,21 @@ extracts space-time transects (timestacks) from a set of coastal images and also
 has the option to store rectied frames in a netCDF4 structure suitable for big
 data analysis.
 
-Usage examples are available [here](doc/pwl_image.md)
+Usage examples are available [here](doc/pwl_image.md).
 
 # pwl.colour
-The module "colour" was develop to translate coastal images (snapshots, timex, variance and timestacks) into the CIECAM2 colourspace and perform some machine learning tasks. For example, calculate classify colours in a snapshot based on well defined target colours:
+The module **colour** is the basis for most of the machine learn tasks available
+in this package. It sploits the fact that unbroken, broken, and sand have
+diferrent colour signatures that can be used to "learn" information about
+these features.
 
-```python
-import numpy as np
-import skimage.io
-import PyWaveLearn.colour as cpwl
+The [wave breaking detection](scripts/learn_wavebreaking) script shows the full
+potential of the colour module.
 
-# read frame
-I = skimage.io.imread("/data/Image/OMB.jpg")
+Usage examples are available [here](doc/pwl_colour.md).
 
-# get color bands
-snap_colours = np.vstack([I[:,:,0].flatten(),I[:,:,1].flatten(),I[:,:,2].flatten()]).T
-user_colours = np.vstack([0,0,0],[255,255,255]).T
-colour_labels = [0,1] # zero is black, one is white
-
-# learning step
-labels = []
-for rgb in snap colours:
-  labels.append(cpwl.classify_colour(rgb, user_colours, colour_labels))
-
-# return to original shape
-L = np.array(labels).reshape(I.shape[0],I.shape[1])
-```
-These functions are the basis for extracting more complicated features from coastal images, such as wave breaking and shoreline evolution.
 
 # pwl.linear
-The module “linear” brings implementations of some linear wave theory equations:
-
 ```python
 from numpy import pi
 import PyWaveLearn.linear as lpwl
