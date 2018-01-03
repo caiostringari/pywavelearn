@@ -1,13 +1,15 @@
 """
 
-Linear wave calculations 
+Linear wave calculations
 
-Original conde obtained from here: https://github.com/ChrisBarker-NOAA/wave_utils
+Original conde obtained from
+https://github.com/ChrisBarker-NOAA/wave_utils
 
 """
 
 import numpy as np
 from scipy.constants import g
+
 
 def wave_number(omega, h, g=g):
     """
@@ -19,7 +21,8 @@ def wave_number(omega, h, g=g):
 
         h [Mandatory (float)]: Water depth
 
-        g [Optinal (float)]: Gravitational acceleration (defaults to 9.80665 m/s^2)
+        g [Optinal (float)]: Gravitational acceleration
+                             (defaults to 9.80665 m/s^2)
     ----------
     Returns:
         k [Mandatory (float)]: Wave number
@@ -43,7 +46,8 @@ def frequency(k, h, g=g):
 
         h [Mandatory (float)]: Water depth
 
-        g [Mandatory (float)]: Gravitational acceleration (defaults to 9.80665 m/s^2)
+        g [Mandatory (float)]: Gravitational acceleration
+                               (defaults to 9.80665 m/s^2)
     ----------
     Returns:
         k [Mandatory (float)]: wave frequency
@@ -54,14 +58,14 @@ def frequency(k, h, g=g):
 def dispersion(p, tol=1e-14, max_iter=1000):
     """
     The linear dispersion relation in non-dimensional form:
-    
+
     finds q, given p
     q = gk/omega^2     non-d wave number
     p = omega^2 h / g   non-d water depth
-    
+
     Starts with the Fenton and McKee approximation, then iterates with Newton's
     method until accurate to within tol.
-    
+
     ----------
     Args:
         p [Mandatory (float)]: Non-dimensional water depth
@@ -76,7 +80,7 @@ def dispersion(p, tol=1e-14, max_iter=1000):
 
     if p <= 0.0:
         raise ValueError("Non dimensional water depth d must be >= 0.0")
-    
+
     # First guess (from Fenton and McKee):
     q = np.tanh(p ** 0.75) ** (-2.0 / 3.0)
 
@@ -89,14 +93,15 @@ def dispersion(p, tol=1e-14, max_iter=1000):
         f = q * np.tanh(q * p) - 1
         iter += 1
         if iter > max_iter:
-            raise RuntimeError("Maximum number of iterations reached in dispersion()")
+            raise RuntimeError("Maximum number of iterations \
+                               reached in dispersion()")
     return q
 
 
 def max_u(a, omega, h, z=None, g=g):
     """
     Compute the maximum Eulerian horizontal velocity at a given depth
-        
+
     ----------
     Args:
         a [Mandatory (float)]: Wave amplitude (1/2 the height)
@@ -108,7 +113,7 @@ def max_u(a, omega, h, z=None, g=g):
         Z [Optional (float)]: Depth at which to compute the velocity. Equals to
                               h if None
 
-        
+
     ----------
     Returns:
         u [Mandatory (float)]: horizontal velocity
@@ -124,7 +129,7 @@ def max_u(a, omega, h, z=None, g=g):
 def amp_scale_at_depth(omega, h, z, g=g):
     """
     Compute the scale factor of the orbital amplitude at the given depth
-        
+
     ----------
     Args:
         a [Mandatory (float)]: Wave amplitude (1/2 the height)
@@ -135,7 +140,8 @@ def amp_scale_at_depth(omega, h, z, g=g):
 
         z [Optional (float)]:  depth at which to compute the scale factor
 
-        g [Optional (float)]: Gravitational acceleration (defaults to 9.80665 m/s^2)
+        g [Optional (float)]: Gravitational acceleration
+                              (defaults to 9.80665 m/s^2)
     ----------
     Returns:
         a [Mandatory (float)]: depth at which to compute the scale factor
@@ -148,15 +154,17 @@ def amp_scale_at_depth(omega, h, z, g=g):
 
 def celerity(k, h, g=g):
     """
-    Compute the celerity (wave speed, phase speed) for a given wave number and depth
-        
+    Compute the celerity (wave speed, phase speed) for a
+    given wave number and depth
+
     ----------
     Args:
         k [Mandatory (float)]: Wave number
 
         h [Mandatory (float)]: Water depth
 
-        g [Optional (int)]: Gravitational acceleration (defaults to 9.80665 m/s^2)
+        g [Optional (int)]: Gravitational acceleration
+                            (defaults to 9.80665 m/s^2)
     ----------
     Returns:
         c [Mandatory (float)]: wave celerity
@@ -170,19 +178,20 @@ def celerity(k, h, g=g):
 def group_speed(k, h, g=g):
     """
     Compute the group speed for a given wave number and depth
-        
+
     ----------
     Args:
         k [Mandatory (float)]: Wave number
 
         h [Mandatory (float)]: Water depth
 
-        g [Optional (int)]: Gravitational acceleration (defaults to 9.80665 m/s^2)
+        g [Optional (int)]: Gravitational acceleration
+                            (defaults to 9.80665 m/s^2)
     ----------
     Returns:
         c [Mandatory (float)]: wave celerity
     """
-    
+
     n = 1.0 / 2 * (1 + (2 * k * h / np.sinh(2 * k * h)))
     Cg = n * celerity(k, h, g)
 
@@ -195,7 +204,7 @@ def shoaling_coeff(omega, h0, h2, g=g):
     The shoaling coeff is the ratio of wave height (H2) at a particular
     point of interest to the original or deep water wave height (H0).
     Pass in h0 = None for deep water
-        
+
     ----------
     Args:
         omega [Mandatory (float)]: Wave frequency
@@ -204,10 +213,11 @@ def shoaling_coeff(omega, h0, h2, g=g):
 
         h0 [Mandatory (float)]: Depth at which to compute the shoaling coeff
 
-        g [Optional (int)]: Gravitational acceleration (defaults to 9.80665 m/s^2)
+        g [Optional (int)]: Gravitational acceleration
+                            (defaults to 9.80665 m/s^2)
     ----------
     Returns:
-        s [Mandatory (float)]: shoaling coeff    
+        s [Mandatory (float)]: shoaling coeff
     """
     k2 = wave_number(g, omega, h2)
     Cg2 = group_speed(k2, h2, g)

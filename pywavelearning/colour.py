@@ -30,8 +30,8 @@ def get_dominant_colour(df, n_colours=8, force_label_to_white=False):
 
          Regions (Mandatory [list]): Labels corresponding regions
 
-         DominantColours (Mandatory [list of lists]): RGB values for each dominant
-         colour.
+         DominantColours (Mandatory [list of lists]): RGB values for each
+                                                      dominant colour.
     """
     Dom_colours = []
     Labels = []
@@ -49,7 +49,8 @@ def get_dominant_colour(df, n_colours=8, force_label_to_white=False):
         # dominant label
         dom_label = ulabels[np.argmax(ucounts)]
         # get dominant colour
-        dom_colour = colour.XYZ_to_sRGB(colour.Lab_to_XYZ(kmeans.cluster_centers_[dom_label, :]))
+        dom_colour = colour.XYZ_to_sRGB(
+            colour.Lab_to_XYZ(kmeans.cluster_centers_[dom_label, :]))
         # set foam to white
         if force_label_to_white:
             if group["region"].values[0] == force_label_to_white:
@@ -64,8 +65,8 @@ def get_dominant_colour(df, n_colours=8, force_label_to_white=False):
 
 def classify_colour(colour, colour_targets, target_labels):
     """
-    Classify a given colour to one of the colour targets using colour similarity
-    metrics in the CIECAM02 colour space.
+    Classify a given colour to one of the colour targets using colour
+    similarity metrics in the CIECAM02 colour space.
 
     ----------
     Args:
@@ -92,7 +93,7 @@ def classify_colour(colour, colour_targets, target_labels):
     return sorted_labels
 
 
-def colour_quantization(rgb,ncolours=16):
+def colour_quantization(rgb, ncolours=16):
     """
     Reduces the number of distinct colors used in an image, usually with the
     intention that the new image should be as visually similar as possible to
@@ -113,7 +114,8 @@ def colour_quantization(rgb,ncolours=16):
          rgb (Mandatory [np.array]): quantizatized RGB image array
     """
     # get all data in a vector format
-    X = np.vstack([rgb[:,:,0].ravel(), rgb[:,:,1].ravel(), rgb[:,:,2].ravel()]).T
+    X = np.vstack([rgb[:, :, 0].ravel(), rgb[:, :, 1].ravel(),
+                   rgb[:, :, 2].ravel()]).T
 
     # fit the model
     km = MiniBatchKMeans(n_clusters=ncolours, random_state=42)

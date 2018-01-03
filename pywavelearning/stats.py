@@ -3,7 +3,8 @@
 import numpy as np
 from . import spectral
 
-def Hm0(f,psd):
+
+def Hm0(f, psd):
     """
     Same as Tm01() but with data and frequency as input paramters
 
@@ -24,14 +25,15 @@ def Hm0(f,psd):
         Tm [Mandatory (float)] spectral peak period [s]
     """
     # total Energy
-    E = np.trapz(psd,f)
+    E = np.trapz(psd, f)
 
     # Hm0
     hm0 = 4*np.sqrt(E)
 
     return hm0
 
-def HM0(data,fs):
+
+def HM0(data, fs):
     """ Same as Hm0() but passing data as input parameter.
 
     Hm0 = 4*srt(E)
@@ -53,17 +55,18 @@ def HM0(data,fs):
     """
 
     # power spectrum density
-    f, psd = spectral.power_spectrum_density(data,fs)
+    f, psd = spectral.power_spectrum_density(data, fs)
 
     # Total Energy
-    E = np.trapz(psd,f)
+    E = np.trapz(psd, f)
 
     # Hm0
     hm0 = 4*np.sqrt(E)
 
     return hm0
 
-def Hbar(data,fs=1,method="komar"):
+
+def Hbar(data, fs=1, method="komar"):
     """ Compute averaged wave height Hbar.
 
     If method = spectral, uses Holthijsen formulation:
@@ -80,7 +83,8 @@ def Hbar(data,fs=1,method="komar"):
     Args:
         data [Mandatory (np.array,tuple or list)]: Surface elevation values [m]
 
-        fs [Optional (float)]: Sampling frequency [Hz] if "spectral" method is used.
+        fs [Optional (float)]: Sampling frequency [Hz] if "spectral"
+                               method is used.
 
         method [Optional (str)]: Which method to use.
 
@@ -90,15 +94,16 @@ def Hbar(data,fs=1,method="komar"):
     """
 
     if method.lower() == "spectral":
-        f,psd = spectral.power_spectrum_density(data,fs)
-        hm0 = Hm0(f,psd)
+        f, psd = spectral.power_spectrum_density(data, fs)
+        hm0 = Hm0(f, psd)
         Hbar = np.sqrt(np.pi/8)*hm0
     elif method.lower() == "komar":
         Hbar = np.sqrt(2*np.pi)*data.std()
 
     return Hbar
 
-def Hrms(data,fs=1,method="komar"):
+
+def Hrms(data, fs=1, method="komar"):
     """ Compute the Root Mean Square wave height (Hrms).
 
     ----------
@@ -114,7 +119,8 @@ def Hrms(data,fs=1,method="komar"):
                 "komar": Calculate Hrms using the Komar's variance formula.
                          This is the default.
 
-        fs [Optional (float)]: Sampling frequency [Hz] if "spectral" method is used.
+        fs [Optional (float)]: Sampling frequency [Hz] if "spectral"
+                               method is used.
     ----------
     Returns:
         Hrms [Mandatory (np.ndarray)] Root Mean Square wave height [m]
@@ -124,13 +130,14 @@ def Hrms(data,fs=1,method="komar"):
         N = len(data)
         Hrms = np.sqrt((1./N)*np.sum(data*data))
     elif method == "spectral":
-        f,psd = spectral.power_spectrum_density(data,fs)
-        hm0 = Hm0(f,psd)
-        Hrms =  0.5*np.sqrt(2)*hm0
+        f, psd = spectral.power_spectrum_density(data, fs)
+        hm0 = Hm0(f, psd)
+        Hrms = 0.5*np.sqrt(2)*hm0
     elif method == "komar":
-         Hrms = np.sqrt(8)*data.std()
+        Hrms = np.sqrt(8)*data.std()
 
     return Hrms
+
 
 def significant_wave_height(heights):
     """ Compute the Significant Wave Height (Hs or Hsig).
@@ -153,7 +160,8 @@ def significant_wave_height(heights):
 
     return Hs
 
-def Tm01(f,psd,cut=False,tmin=1,tmax=20):
+
+def Tm01(f, psd, cut=False, tmin=1, tmax=20):
     """
     Calculate the first spectral wave period (Tm01). Will use only a portion
     of the spetra if "cut" is set to True.
@@ -175,7 +183,7 @@ def Tm01(f,psd,cut=False,tmin=1,tmax=20):
     Returns:
         Tm [Mandatory (float)] spectral peak period [s]
     """
-        
+
     # cut to the desired frequency range
     if cut:
         i2 = np.abs((1/f)-tmin).argmin()
@@ -184,13 +192,14 @@ def Tm01(f,psd,cut=False,tmin=1,tmax=20):
         psd = psd[i1:i2]
 
     # calculate
-    m0 = np.trapz(np.abs(psd),f)
-    m1 = np.trapz(psd*f,f)
+    m0 = np.trapz(np.abs(psd), f)
+    m1 = np.trapz(psd*f, f)
     Tm = m0/m1
 
     return Tm
 
-def Tm02(f,psd,cut=False,tmin=1,tmax=20):
+
+def Tm02(f, psd, cut=False, tmin=1, tmax=20):
     """
     Calculate the second spectral wave period (Tm01). Will use only a portion
     of the spetra if "cut" is set to True.
@@ -219,13 +228,14 @@ def Tm02(f,psd,cut=False,tmin=1,tmax=20):
         psd = psd[i1:i2]
 
     # calculate
-    m0 = np.trapz(np.abs(psd),f)
-    m2 = np.trapz(psd*(f*f),f)
+    m0 = np.trapz(np.abs(psd), f)
+    m2 = np.trapz(psd*(f*f), f)
     Tm = np.sqrt(m0/m2)
 
     return Tm
 
-def TM01(data,fs,cut=False,tmin=1,tmax=20):
+
+def TM01(data, fs, cut=False, tmin=1, tmax=20):
     """
     Same as Tm01() but with data and frequency as input paramters
 
@@ -245,9 +255,9 @@ def TM01(data,fs,cut=False,tmin=1,tmax=20):
     Returns:
         Tm [Mandatory (float)] spectral peak period [s]
     """
-    
+
     # power spectrum density
-    f, psd = spectral.power_spectrum_density(data,fs)
+    f, psd = spectral.power_spectrum_density(data, fs)
 
     if cut:
         i2 = np.abs((1/f)-tmin).argmin()
@@ -255,14 +265,15 @@ def TM01(data,fs,cut=False,tmin=1,tmax=20):
         f = f[i1:i2]
         psd = psd[i1:i2]
 
-    m0 = np.trapz(np.abs(psd),f)
-    m1 = np.trapz(psd*f,f)
+    m0 = np.trapz(np.abs(psd), f)
+    m1 = np.trapz(psd*f, f)
 
     Tm = m0/m1
 
     return Tm
 
-def TM02(data,fs,cut=False,tmin=1,tmax=20):
+
+def TM02(data, fs, cut=False, tmin=1, tmax=20):
     """
     Same as Tm02() but with data and frequency as input paramters
 
@@ -283,7 +294,7 @@ def TM02(data,fs,cut=False,tmin=1,tmax=20):
         Tm [Mandatory (float)] spectral peak period [s]
     """
     # power spectrum density
-    f, psd = spectral.power_spectrum_density(data,fs)
+    f, psd = spectral.power_spectrum_density(data, fs)
 
     if cut:
         i2 = np.abs((1/f)-tmin).argmin()
@@ -291,12 +302,13 @@ def TM02(data,fs,cut=False,tmin=1,tmax=20):
         f = f[i1:i2]
         psd = psd[i1:i2]
 
-    m0 = np.trapz(np.abs(psd),f)
-    m2 = np.trapz(psd*(f*f),f)
+    m0 = np.trapz(np.abs(psd), f)
+    m2 = np.trapz(psd*(f*f), f)
 
     Tm = np.sqrt(m0/m2)
 
     return Tm
+
 
 def significant_wave_period(periods):
     """

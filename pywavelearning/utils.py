@@ -19,7 +19,7 @@ import scipy.spatial
 
 # date helpers
 from matplotlib.dates import date2num, num2date
-        
+
 
 def peaklocalextremas(y, lookahead=16, delta=0.1, x=None):
     """
@@ -29,16 +29,17 @@ def peaklocalextremas(y, lookahead=16, delta=0.1, x=None):
     Args:
         x (Mandatory [tuple,np.ndarray]): 1xN data array.
 
-        lookahead (Optional [int]): Distance to look ahead from a peak candidate
-        to determine if it is the actual peak. (samples/period)/f where
-        4>=f>=1.25 might be a good value. Defalt is 10 (~ 1 sec)
+        lookahead (Optional [int]): Distance to look ahead from a peak
+        candidate to determine if it is the actual peak. (samples/period)/f
+        where 4>=f>=1.25 might be a good value. Defalt is 10 (~ 1 sec)
 
         delta (Optional [float]): this specifies a minimum difference between a
         peak and the following points, before a peak may be considered a peak.
-        Useful to hinder the function from picking up false peaks towards to end
-        of the signal. To work well delta should be set to delta >= RMSnoise * 5.
-        When omitted delta function causes a 20x decrease in speed. When used
-        correctly it can double the speed of the function. Default is 0.05.
+        Useful to hinder the function from picking up false peaks towards to
+        end of the signal. To work well delta should be set to delta
+        >= RMSnoise * 5. When omitted delta function causes a 20x decrease in
+        speed. When used correctly it can double the speed of the function.
+        Default is 0.05.
 
         y (Optional [tuple, np.ndarray]): time array. If empty will use
         range(len(wave)).
@@ -127,17 +128,19 @@ def peaklocalextremas(y, lookahead=16, delta=0.1, x=None):
         else:
             min_peaks.pop(0)
         del dump
-    except:
+    except Exception:
         raise IndexError()
         # pass
         # no peaks were found, should the function return empty lists?
     try:
-        return np.array(min_peaks)[:, 0].astype(int), np.array(max_peaks)[:, 0].astype(int)
-    except:
-        return np.array([0,1,2]),np.array([0,1,2])
+        return np.array(min_peaks)[:, 0].astype(int), \
+               np.array(max_peaks)[:, 0].astype(int)
+    except Exception:
+        return np.array([0, 0]), np.array([0, 0])
+
 
 def ellapsedseconds(times):
-    """ 
+    """
     Auxiliary function to count how many (fractions) of seconds have passed
     from the start of a stationary series.
 
@@ -154,12 +157,12 @@ def ellapsedseconds(times):
     seconds = []
     for t in range(len(times)):
         dt = (times[t]-times[0]).total_seconds()
-        seconds.append(round(dt,3))
+        seconds.append(round(dt, 3))
 
     return np.array(seconds)
 
 
-def fixtime(times,timedelta=0):
+def fixtime(times, timedelta=0):
     """
     Fix time based on offsets. Always return a array of datetimes no matter
     what kind of input.
@@ -196,16 +199,17 @@ def dffs(df):
     Returns:
         fs [Mandatory (float)]: sample frequency in Hz
     """
-    
+
     times = fixtime(df.index.values)
 
     # TODO: raise an error if the indexes are not time values
-    
+
     fs = 1./(times[1]-times[0]).total_seconds()
 
     return int(fs)
 
-def timeindexes(times,t1,t2):
+
+def timeindexes(times, t1, t2):
     """
     Nearest neighbour search in time vectors
 
@@ -222,7 +226,7 @@ def timeindexes(times,t1,t2):
 
     # variables
     t = date2num(times)
-    i = np.arange(0,len(t),1)
+    i = np.arange(0, len(t), 1)
     t1 = date2num(t1)
     t2 = date2num(t2)
 
@@ -230,7 +234,8 @@ def timeindexes(times,t1,t2):
     i1 = np.abs(t - t1).argmin()
     i2 = np.abs(t - t2).argmin()
 
-    return i1,i2
+    return i1, i2
+
 
 def cross_correlation_fft(a, b, mode='valid'):
     """
@@ -250,7 +255,7 @@ def cross_correlation_fft(a, b, mode='valid'):
         r [Madatory, (np.array)] Correlation coefficients.
                                  Shape depends on mode.
     """
-    
+
     a = np.asarray(a)
     b = np.asarray(b)
     if np.prod(a.ndim) > 1 or np.prod(b.ndim) > 1:
@@ -258,18 +263,20 @@ def cross_correlation_fft(a, b, mode='valid'):
     if len(b) > len(a):
         a, b = b, a
     n = len(a)
-    
+
     # Pad vector
-    c = np.hstack((np.zeros(int(n/2)), b, np.zeros(int(n/2) + len(a) - len(b) + 1)))
-    
+    c = np.hstack((np.zeros(int(n/2)), b,
+                   np.zeros(int(n/2) + len(a) - len(b) + 1)))
+
     # Convolution of reverse signal:
     return signal.fftconvolve(c, a[::-1], mode=mode)
+
 
 def align_signals(a, b):
     """
     Finds optimal delay to align two 1D signals maximizes
     hstack((zeros(shift), b)) = a
-    
+
     ----------
     Args:
         a [Mandatory (np.array)]: signal "a" array (1D)
@@ -278,7 +285,7 @@ def align_signals(a, b):
 
     ----------
     Returns:
-        shift [Mandatory (np.array)]: Integer that maximizes 
+        shift [Mandatory (np.array)]: Integer that maximizes
                                   hstack((zeros(shift), b)) - a = 0
     """
     # check inputs
@@ -300,10 +307,11 @@ def align_signals(a, b):
         shift += 1
     return sign * shift
 
-def find_nearest(target,val):
+
+def find_nearest(target, val):
     """ Archaic and brute force method to find the nearest indexes to a
         given target cvalue in a inpute vector.
-        
+
         >> Use np.argmin() or scipy.KDTree() instead <<
 
     ----------
@@ -321,7 +329,8 @@ def find_nearest(target,val):
     difs = abs(target-val)
     min_index, min_value = min(enumerate(difs), key=operator.itemgetter(1))
     value = target[min_index]
-    return min_index,value
+    return min_index, value
+
 
 def normalize(data):
     """ Normalize a vector by its variance.
@@ -340,6 +349,7 @@ def normalize(data):
     data = (data - np.mean(data)) / (np.sqrt(variance))
     return data
 
+
 def nextpow2(i):
     """ Gets the next power of 2 of a given number
 
@@ -352,8 +362,10 @@ def nextpow2(i):
         n [Mandatory (interger)]: next power of 2 of i
     """
     n = 1
-    while n < i: n *= 2
+    while n < i:
+        n *= 2
     return n
+
 
 def zeropad(x):
     """
@@ -368,10 +380,11 @@ def zeropad(x):
     Returns:
         zeropad [Mandatory (np.array]: zero-paded array
     """
-    N=len(x)
+    N = len(x)
     zeropad = np.zeros(nextpow2(N))
     zeropad[0:N] = x
     return zeropad
+
 
 def str2bool(v):
     """
@@ -388,7 +401,7 @@ def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
 
 
-def chunkify(lst,n):
+def chunkify(lst, n):
     """
     Chunkify a list in to "n" sub-lists. Works with numpy arrays as well.
 
@@ -402,13 +415,13 @@ def chunkify(lst,n):
     Returns:
         lst [Mandatory (list of lists)]:
     """
+    return [lst[i::n] for i in range(n)]
 
-    return [ lst[i::n] for i in range(n) ]
 
-def kdtree(A,pt):
-    _,indexes = scipy.spatial.KDTree(A).query(pt)
+def kdtree(A, pt):
+    _, indexes = scipy.spatial.KDTree(A).query(pt)
     return indexes
 
-def random_string(n):
-   return ''.join(random.choice(string.ascii_lowercase) for i in range(n))
 
+def random_string(n):
+    return ''.join(random.choice(string.ascii_lowercase) for i in range(n))

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from . import utils, image, spectral, colour, sensors, stats, linear
 
 __all__ = ['utils',
-		   'image',
+           'image',
            'spectral',
            'colour',
            'stats',
