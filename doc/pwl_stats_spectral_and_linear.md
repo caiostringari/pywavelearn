@@ -42,7 +42,7 @@ from pywavelearn.spectral import power_spectrum_density
 f, psd = power_spectrum_density(wt, fs, window='hann', plot=True)
 ```
 
-# Statistical analysis
+# Statistical analysis from the spetrum
 
 Most of the statistics available in Holthuijsen (2007) - Waves in Oceanic
 and Coastal Waters were implemented in the **stats** module.
@@ -79,6 +79,8 @@ Tm02a = TM01(wv, fs)
 
 Which should produce exactly the same results as before.
 
+# Wave-by-wave statistical analysis
+
 Maybe one of the most powerful/useful tools in this package is its ability
 of perform high-level wave-by-wave analysis. Instead of the traditional
 zero-crossings approach, it implements a iterative and procedural search for
@@ -89,21 +91,16 @@ of the zero-crossing methods
 from pywavelearn.utils import peaklocalextremas
 mins, maxs = peaklocalextremas(wt, lookahead=10, delta=0.025)
 ```
-
-
-```python
-from pywavelearn.utils import peaklocalextremas
-from pywavelearn.stats import (significant_wave_height,
-                               significant_wave_period)
-
-mins, maxs = peaklocalextremas(wt, lookahead=10, delta=0.025)
-```
 ![](image/wavebywave.png)
+
 
 We can calculate the similar statistics as before, but now from the
 raw record.
 
 ```python
+from pywavelearn.utils import peaklocalextremas
+from pywavelearn.stats import (significant_wave_height,
+                               significant_wave_period)
 
 # make sure to always start and end with a local minima
 if t[mins[0]] > t[maxs[0]]:
@@ -132,7 +129,6 @@ Resulting in:
 ```Significant wave period: 10.6```
 
 Which is quite similar to the spectral values obtained before.
-
 
 # Linear wave theory
 
