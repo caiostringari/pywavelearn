@@ -86,19 +86,11 @@ deal with the most common wave analysis problems. It provide ways to calculate
 wave heights, periods, spectral densities and most of the parameters derived
 from the linear wave theory.
 
-Usage examples are available [here](doc/stats_spectral_and_linear.md).
+Usage examples are available [here](doc/pwl_stats_spectral_and_linear.md).
 
-
-
-
-#
+# pwl.sensors
 TODO: Add docs
 
-# pwl. sensors
-TODO: Add docs
-
-# pwl.utils
-The module “utils” gathers commonly used  functions shared among the other modules.
 
 # scripts
 TODO: Add docs
