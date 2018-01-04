@@ -1,9 +1,9 @@
 # PyWaveLearn
 Machine learning for wave scientists.
 
-This repository gathers useful tools for coastal scientists to handle common nearshore data with special focus on data mining,  machine learning, and big data.
+This repository gathers useful tools for coastal scientists to handle common near-shore data with special focus on data mining,  machine learning, and big data.
 
-For example, hard tasks sush as detecting wave breaking becomes as easy as:
+For example, hard tasks such as detecting wave breaking becomes as easy as:
 
 ```bash
 python learn_wavebreaking.py
@@ -58,19 +58,19 @@ sudo python setup.py install
 
 # pwl.image
 The module **image** was designed to make it easier to rectify ARGUS-like
-images using the OpenCV and scikit-image packages. Most of the heavy lifiting is
+images using the OpenCV and scikit-image packages. Most of the heavy lifting is
 done using [Flamingo](http://flamingo-image.readthedocs.io/). This module has
 the companion script [extract_timestack.py](scripts/extract_timestack.py) which
 extracts space-time transects (timestacks) from a set of coastal images and also
-has the option to store rectied frames in a netCDF4 structure suitable for big
+has the option to store rectified frames in a netCDF4 structure suitable for big
 data analysis.
 
 Usage examples are available [here](doc/pwl_image.md).
 
 # pwl.colour
 The module **colour** is the basis for most of the machine learn tasks available
-in this package. It sploits the fact that unbroken, broken, and sand have
-diferrent colour signatures that can be used to "learn" information about
+in this package. It exploits the fact that unbroken, broken, and sand have
+different colour signatures that can be used to "learn" information about
 these features.
 
 The [wave breaking detection](scripts/learn_wavebreaking) script shows the full

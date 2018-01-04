@@ -63,8 +63,8 @@ import cv2
 import skimage.io
 
 # local tools
-import pywavelearning.image as ipwl
-from pywavelearning.utils import chunkify
+import pywavelearn.image as ipwl
+from pywavelearn.utils import chunkify
 
 
 def rectify_worker(num,frames):
@@ -284,7 +284,7 @@ def kdtree(A,pt):
     return indexes
 
 def pixel_window(a,i,j,s=8):
-    
+
     # compute domain
     i = np.arange(i-s,i+s+1,1)
     j = np.arange(j-s,j+s+1,1)
@@ -293,13 +293,13 @@ def pixel_window(a,i,j,s=8):
     I,J = np.meshgrid(i,j)
 
     # Remove pixels outside the borders
-    
+
     # i-dimension
     I = I.flatten()
     I[I<0] = -999
     I[I>a.shape[0]] = -999
     idx = np.where(I==-999)
-    
+
     # j-dimension
     J = J.flatten()
     J[J<0] = -999
@@ -534,11 +534,11 @@ if __name__ == '__main__':
     K,DC = ipwl.camera_parser(args.camera[0])
 
     # Read XYZ coords
-    dfxyz = pd.read_csv(args.xyzfile[0])
-    XYZ = dfxyz[["x","y","z"]] .values
+    dfxyz = pd.read_csv(os.path.realpath(args.xyzfile[0]))
+    XYZ = dfxyz[["x","y","z"]].values
 
     # Read UV coords
-    dfuv = pd.read_csv(args.uvfile[0])
+    dfuv = pd.read_csv(os.path.realpath(args.uvfile[0]))
     UV = dfuv[["u","v"]].values
 
     # Horizon

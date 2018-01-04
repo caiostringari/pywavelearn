@@ -1,4 +1,5 @@
-This module's main task is to provide a neat way to compare and classifiy colors.
+This module's main task is to provide a neat way to compare and
+classify colours.
 
 Let's load an image and perform some tasks
 
@@ -13,15 +14,15 @@ img = skimage.io.imread("image/OMB.jpg")
 ```
 ![](image/omb.jpg)
 
-We can start, for example, by reducing the number of colors in the image:
+We can start, for example, by reducing the number of colours in the image:
 
 ```python
-img8bit = cpwl.colour_quantization(rgb, ncolours=8)
+img8bit = cpwl.colour_quantization(img, ncolours=8)
 ```
 
 ![](image/omb_8bit.png)
 
-Next, we can try to subset and classifiy some region in the image:
+Next, we can try to subset and classify some region in the image:
 
 ```python
 # subset the image
@@ -51,7 +52,7 @@ import matplotlib.patches as patches
 # return to original shape
 L = np.array(labels).reshape(I.shape[0],I.shape[1])
 
-# show the region for verificaiton
+# show the region for verification
 fig, (ax1) = plt.subplots()
 ax1.imshow(img)
 rect = patches.Rectangle((j, i), di, dj,fill=False,lw=2,color="r")
@@ -68,19 +69,25 @@ plt.show()
 ![](image/pwl_colour_a.png)
 
 
-It can also be used for colour quantization:
+A better way to assess the prediction would to use the concept of dominant
+colour instead of simply averaging the values. It can be done using the
+```get_dominant_colour()``` function.
 
 ```python
-import skimage.io
-import PyWaveLearn.colour as cpwl
+import pandas as pd
+# build a dataframe with RGB values
+df = pd.DataFrame(np.vstack([I[:,:,0].ravel(),
+                             I[:,:,1].ravel(),
+                             I[:,:,2].ravel()]).T,
+                             columns=["r","g","b")
+# add labels and region names
+df["region"] = ["water"]*len(L.ravel())
+df["label"] = 2
 
-# read frame
-rgb = skimage.io.imread("../data/Image/OMB.jpg")
+label, region, rgb = cpwl.get_dominant_colour(df, n_colours=8)
 
-# reduce to 16 colours
-
+# print results
+print ("Predicted dominant label:",label[0].astype(int))
 ```
 
-And to get dominant colours from a known dataset.
-
-TODO: Add documentation to ```get_dominant_colour()```.
+`Predicted dominant label: 2`
