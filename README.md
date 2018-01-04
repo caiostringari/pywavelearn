@@ -89,8 +89,15 @@ from the linear wave theory.
 Usage examples are available [here](doc/pwl_stats_spectral_and_linear.md).
 
 # pwl.sensors
-TODO: Add docs
+TODO:
+
+1. Add docs
+2. Work on RBR PT parser
+3. Work on Sontek ADV parser
 
 
 # scripts
-TODO: Add docs
+TODO:
+
+1. Fix PEP8 issues
+2. Add docs
