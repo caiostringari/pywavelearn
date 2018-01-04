@@ -37,6 +37,11 @@ conda install -c conda-forge colour-science
 conda install -c conda-forge opencv
 # science kits
 conda install scikit-image scikit-learn
+# heavy machine learning machinery
+sudo apt-get install gcc gfortran
+conda install cython tensorflow keras
+# timeseries learning
+pip install tslearn
 # a nice progress bar
 conda install -c conda-forge tqdm
 # peak detection
@@ -50,7 +55,7 @@ sudo apt-get install ffmpeg ubuntu-restricted-extras
 
 Now, install pywavelearn:
 
-```python
+```bash
 git clone https://github.com/caiostringari/pywavelearn.git
 cd pywavelearn
 sudo python setup.py install
@@ -88,16 +93,29 @@ from the linear wave theory.
 
 Usage examples are available [here](doc/pwl_stats_spectral_and_linear.md).
 
-# pwl.sensors
+# scripts
+
+Most of the functions available across the various modules have a Command Line
+Interface (CLI) companion. The most important ones are:
+
+1. [calibrate_camera.py](scripts/calibrate_camera.py)
+1. [extract_frames.py](scripts/extract_frames.py)
+2. [get_gcp_uvcoords.py](scripts/get_gcp_uvcoords.py)
+3. [extract_timestack.py](scripts/extract_timestack.py)
+4. [learn_wavebreaking.py](scripts/learn_wavebreaking.py)
+
+The full help for these scripts can be seen using
+```python script_name.py --help```.
+
+**TODOS:**
+
+1. Fix all PEP8 issues
+2. Add docs
+
+
+<!-- # pwl.sensors
 TODO:
 
 1. Add docs
 2. Work on RBR PT parser
-3. Work on Sontek ADV parser
-
-
-# scripts
-TODO:
-
-1. Fix PEP8 issues
-2. Add docs
+3. Work on Sontek ADV parser -->
