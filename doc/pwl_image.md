@@ -45,14 +45,13 @@ The resulting images should something like this:
 **Notes:**
 1. If you don't already have the camera calibration file,
 [this script](../scripts/calibrate_camera.py) can be used to generate a valid file.
-2. If you don't know the pixel coordinates of the GCPS,
-use [this script](../scripts/get_gcp_uvcoords.py).
+2. If you don't know the GCPs' pixel coordinates, use [this GUI](../scripts/get_gcp_uvcoords.py).
 
 # Batch processing
 
 In order to rectify a series of frames and to extract timestacks, the script
-[extract_timestack.py](../scripts/extract_timestack.py). It supports
-multi-processing via the [multiprocessing](https://docs.python.org/2/library/multiprocessing.html)
+[extract_timestack.py](../scripts/extract_timestack.py) was designed. It
+supports multi-processing via [multiprocessing](https://docs.python.org/2/library/multiprocessing.html)
 module. Although this script was originally designed to extract timestacks,
 it also supports saving rectified frames to netCDF4 files.
 
@@ -120,7 +119,7 @@ The resulting timestack looks like this:
 ![](image/omb_timestack.jpg)
 
 **Notes:**
-1. Do not use this script in a regular laptop. Although it will run just fine,
+1. Do not use this script on a regular laptop. Although it will run just fine,
 it was designed to run in a HPC facility.
 2. This script should work with [PBS](http://www.arc.ox.ac.uk/content/pbs)
 out-of-the-box.

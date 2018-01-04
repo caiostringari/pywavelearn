@@ -14,7 +14,7 @@ python learn_wavebreaking.py
 
 # Installation:
 
-PyWaveLearn can only be installed from the source code.
+pywavelearn can only be installed from the source code.
 
 First, make sure you have all the dependencies:
 
@@ -69,9 +69,9 @@ Usage examples are available [here](doc/pwl_image.md).
 
 # pwl.colour
 The module **colour** is the basis for most of the machine learn tasks available
-in this package. It exploits the fact that unbroken, broken, and sand have
-different colour signatures that can be used to "learn" information about
-these features.
+in this package. It exploits the fact that unbroken waves, broken waves, and
+the shoreline have different colour signatures that can be used to "learn"
+information about these features.
 
 The [wave breaking detection](scripts/learn_wavebreaking) script shows the full
 potential of the colour module.
@@ -79,37 +79,19 @@ potential of the colour module.
 Usage examples are available [here](doc/pwl_colour.md).
 
 
-# pwl.linear
-```python
-from numpy import pi
-import PyWaveLearn.linear as lpwl
+# pwl.stats, pwl.spectral and pwl.linear
 
-# define a water depth
-h = 2.0
-# define a non-dimensional water depth
-p = 1.2
-# define a wave period
-T = 10
-# wave an angular frequency
-omega = 2*pi/T
+In the modules **stats**, **spectral** and **linear** you will find tools to
+deal with the most common wave analysis problems. It provide ways to calculate
+wave heights, periods, spectral densities and most of the parameters derived
+from the linear wave theory.
 
-# wave number
-k = lpwl.wave_number(omega)
+Usage examples are available [here](doc/stats_spectral_and_linear.md).
 
-# wave angular frequency
-omega  = lpwl.frequency(k)
 
-# wave celerity at any depth
-c = lpwl.celerity(k,h)
 
-# wave group speed at any depth
-cg= lpwl.group_speed(k,h)
 
-# dispersion relation for a non-dimensional water depth
-q = lpwl.dispersion(p)
-```
-
-# pwl.spectral and pwl.stats
+#
 TODO: Add docs
 
 # pwl. sensors
