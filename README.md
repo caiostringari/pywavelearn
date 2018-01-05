@@ -1,13 +1,17 @@
 # PyWaveLearn
 Machine learning for wave scientists.
 
-This repository gathers useful tools for coastal scientists to handle common near-shore data with special focus on data mining,  machine learning, and big data.
+This repository make available some useful tools for coastal scientists to
+handle common near-shore data with special focus on data mining,
+machine learning, and big data.
 
-For example, hard tasks such as detecting wave breaking becomes as easy as:
+For example, hard tasks such as detecting wave breaking becomes as easy as in
+[this example](notebooks/learn_wavebreaking.ipynb).
 
 ```bash
 python learn_wavebreaking.py
 ```
+
 
 ![breaking](doc/image/predict_wavebreaking.gif)
 
