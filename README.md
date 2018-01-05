@@ -8,7 +8,7 @@ machine learning, and big data.
 For example, tasks such as detecting wave breaking becomes as easy as in
 [this example](notebooks/learn_wavebreaking.ipynb).
 
-Applying black magic [this](notebooks/learn_wavebreaking.ipynb) turns into [this](doc/image/predict_wavebreaking.gif):
+Applying some black magic [this](notebooks/learn_wavebreaking.ipynb) turns into [this](doc/image/predict_wavebreaking.gif):
 
 ![breaking](doc/image/predict_wavebreaking.gif)
 
