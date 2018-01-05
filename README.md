@@ -5,13 +5,10 @@ This repository make available some useful tools for coastal scientists to
 handle common near-shore data with special focus on data mining,
 machine learning, and big data.
 
-For example, hard tasks such as detecting wave breaking becomes as easy as in
+For example, tasks such as detecting wave breaking becomes as easy as in
 [this example](notebooks/learn_wavebreaking.ipynb).
 
-```bash
-python learn_wavebreaking.py
-```
-
+Applying black magic [this](notebooks/learn_wavebreaking.ipynb) turns into [this](doc/image/predict_wavebreaking.gif):
 
 ![breaking](doc/image/predict_wavebreaking.gif)
 
