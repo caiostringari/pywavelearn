@@ -18,6 +18,7 @@ from scipy import signal
 import scipy.spatial
 
 # date helpers
+import datetime
 from matplotlib.dates import date2num, num2date
 
 
