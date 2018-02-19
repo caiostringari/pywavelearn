@@ -279,17 +279,17 @@ should be projected.""",)
     # # auxiliary variables
     ds["bands"] = (('bands'), ["red", "green", "blue"])
     # write to file
-    ds.to_netcdf(args.output[0])
+    ds.to_netcdf(args.output[0], format="NETCDF3_64BIT")
 
-    # plot
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 10))
-    # pixel coords
-    ax1.imshow(Ic)
-    # metric coords
-    im = ax2.pcolormesh(Xc, Yc, Ic.mean(axis=2))
-    im.set_array(None)
-    im.set_edgecolor('none')
-    im.set_facecolor(construct_rgba_vector(Ic, n_alpha=0))
-    ax2.set_aspect("equal")
-    # show
-    plt.show()
+    # # plot
+    # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 10))
+    # # pixel coords
+    # ax1.imshow(Ic)
+    # # metric coords
+    # im = ax2.pcolormesh(Xc, Yc, Ic.mean(axis=2))
+    # im.set_array(None)
+    # im.set_edgecolor('none')
+    # im.set_facecolor(construct_rgba_vector(Ic, n_alpha=0))
+    # ax2.set_aspect("equal")
+    # # show
+    # plt.show()
