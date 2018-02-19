@@ -50,7 +50,7 @@ def pixel_window(a, i, j, iwin=8, jwin=8):
     # i-dimension
     Iimg = Iimg.flatten()
     Iimg[Iimg < 0] = -999
-    I[Iimg > a.shape[0]] = -999
+    Iimg[Iimg > a.shape[0]] = -999
     idx = np.where(Iimg == -999)
 
     # j-dimension

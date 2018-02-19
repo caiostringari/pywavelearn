@@ -426,3 +426,121 @@ def kdtree(A, pt):
 
 def random_string(n):
     return ''.join(random.choice(string.ascii_lowercase) for i in range(n))
+
+
+def process_timestack(ds):
+    """
+    Read timestack variables from netCDF.
+
+    ----------
+    Args:
+        ncin (Mandatory [str]): Input file path. Should also work with
+        remote files out-of-the-box.
+    ----------
+    Return:
+        stk_secs (Mandatory [np.array]): time array
+
+        crx_dist (Mandatory [np.array]): space array
+
+        rgb (Mandatory [array]): RGB representation shape [time,space,3].
+    """
+
+    # get coordinates
+    x = ds["x"].values
+    y = ds["y"].values
+
+    # compute distance from shore
+    stk_len = np.sqrt(((x.max() - x.min()) * (x.max() - x.min())) +
+                      ((y.max() - y.min()) * (y.max() - y.min())))
+    stk_cross_shore_offset = y.min()
+    stk_dist = np.linspace(stk_cross_shore_offset,
+                           stk_len+stk_cross_shore_offset, len(x))
+    # get timestack times
+    stk_time = pd.to_datetime(ds["time"].values).to_pydatetime()
+    stk_secs = ellapsedseconds(stk_time)
+    # get RGB values
+    rgb = ds["rgb"].values
+    # return data
+    return stk_time, stk_dist, rgb
+
+
+def intersection(x1, y1, x2, y2):
+    """
+    Intersections of curves.
+
+    Computes the (x,y) locations where two curves intersect.  The curves
+    can be broken with NaNs or have vertical segments.
+
+    ----------
+    Args:
+    x1, x2, y1, y2 (Mandatory [np.array]): arrays defining the curves
+                                           (x, y) locations.
+    ----------
+    Returns:
+    x, y (Mandatory [np.array]): coordinate(s) of the curve intersections.
+
+    """
+    ii, jj = _rectangle_intersection_(x1, y1, x2, y2)
+    n = len(ii)
+
+    dxy1 = np.diff(np.c_[x1, y1], axis=0)
+    dxy2 = np.diff(np.c_[x2, y2], axis=0)
+
+    T = np.zeros((4, n))
+    AA = np.zeros((4, 4, n))
+    AA[0:2, 2, :] = -1
+    AA[2:4, 3, :] = -1
+    AA[0::2, 0, :] = dxy1[ii, :].T
+    AA[1::2, 1, :] = dxy2[jj, :].T
+
+    BB = np.zeros((4, n))
+    BB[0, :] = -x1[ii].ravel()
+    BB[1, :] = -x2[jj].ravel()
+    BB[2, :] = -y1[ii].ravel()
+    BB[3, :] = -y2[jj].ravel()
+
+    for i in range(n):
+        try:
+            T[:, i] = np.linalg.solve(AA[:, :, i], BB[:, i])
+        except Exception:
+            T[:, i] = np.NaN
+
+    irn = (T[0, :] >= 0) & (T[1, :] >= 0) & (T[0, :] <= 1) & (T[1, :] <= 1)
+
+    xy0 = T[2:, irn]
+    xy0 = xy0.T
+
+    return xy0[:, 0], xy0[:, 1]
+
+
+def _rect_inter_inner(x1, x2):
+    """ axiliary function to intersection() """
+
+    n1 = x1.shape[0]-1
+    n2 = x2.shape[0]-1
+
+    X1 = np.c_[x1[:-1], x1[1:]]
+    X2 = np.c_[x2[:-1], x2[1:]]
+
+    S1 = np.tile(X1.min(axis=1), (n2, 1)).T
+    S2 = np.tile(X2.max(axis=1), (n1, 1))
+    S3 = np.tile(X1.max(axis=1), (n2, 1)).T
+    S4 = np.tile(X2.min(axis=1), (n1, 1))
+
+    return S1, S2, S3, S4
+
+
+def _rectangle_intersection_(x1, y1, x2, y2):
+    """ axiliary functio to intersection() """
+
+    S1, S2, S3, S4 = _rect_inter_inner(x1, x2)
+    S5, S6, S7, S8 = _rect_inter_inner(y1, y2)
+
+    C1 = np.less_equal(S1, S2)
+    C2 = np.greater_equal(S3, S4)
+    C3 = np.less_equal(S5, S6)
+    C4 = np.greater_equal(S7, S8)
+
+    ii, jj = np.nonzero(C1 & C2 & C3 & C4)
+
+    return ii, jj

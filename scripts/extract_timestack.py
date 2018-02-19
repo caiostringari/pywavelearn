@@ -212,7 +212,11 @@ def rectify_worker(num,frames):
         # auxiliary variables
         ds["bands"] = ["red","green","blue"]
         # write to file
-        ds.to_netcdf("{}/{}.nc".format(tmpfolder,now.strftime(fmt)))
+        units = 'days since 2000-01-01 00:00:00'
+        calendar = 'gregorian'
+        encoding=dict(time=dict(units=units, calendar=calendar))
+        ds.to_netcdf("{}/{}.nc".format(tmpfolder,now.strftime(fmt)),
+                     encoding=encoding)
 
         k+=1
         if fbreak and k == fbreak:
