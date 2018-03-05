@@ -1,7 +1,7 @@
 This module's main task is to provide a neat way to compare and
 classify colours.
 
-Let's load an image and perform some tasks
+Let's load an image and perform some tasks:
 
 ```python
 import numpy as np
@@ -71,7 +71,7 @@ plt.show()
 
 A better way to assess the prediction would to use the concept of dominant
 colour instead of simply averaging the values. It can be done using the
-```get_dominant_colour()``` function.
+```get_dominant_colour()``` function:
 
 ```python
 import pandas as pd

@@ -1,6 +1,6 @@
 # Single frame rectification
 
-This module main functions is to provide easy ways to rectify raw imagery, and
+This module main function is to provide easy ways to rectify raw imagery, and
 to extract timestacks.
 
 Assuming that we know the camera intrinsic and extrinsic parameters and the
@@ -11,6 +11,7 @@ rectification procedure looks something like this:
 import cv2
 import skimage.io
 import pandas as pd
+# find_homography and recify_image were borrowed from Flamingo
 from pywavelearn.image import find_homography, rectify_image, camera_parser
 
 # read the camera intrinsic parameters
@@ -47,10 +48,9 @@ The resulting images should something like this:
 [this script](../scripts/calibrate_camera.py) can be used to generate a valid file.
 2. If you don't know the GCPs' pixel coordinates, use [this GUI](../scripts/get_gcp_uvcoords.py).
 
-# Batch processing
+# Batch processing and time-stack extraction
 
-In order to rectify a series of frames and to extract timestacks, the script
-[extract_timestack.py](../scripts/extract_timestack.py) was designed. It
+In order to rectify a series of frames and to extract timestacks, you can use the script [extract_timestack.py](../scripts/extract_timestack.py). It
 supports multi-processing via [multiprocessing](https://docs.python.org/2/library/multiprocessing.html)
 module. Although this script was originally designed to extract timestacks,
 it also supports saving rectified frames to netCDF4 files.

@@ -1,11 +1,11 @@
 
 # Spectral parameters
 
-Let's start by creating a modulated sinuisdal wave.
+Let's start by creating a modulated sinusoidal wave.
 
 ```python
 tmax = 400
-fs = 1./0.1  # 1/Hz
+fs = 10. # 1/Hz
 t = np.arange(0, tmax, 1./fs)
 
 # first wave
@@ -74,7 +74,7 @@ from pywavelearn.stats import HM0, TM01, TM02
 
 Hm0a = HM0(wv, fs)
 Tm01a = TM01(wv, fs)
-Tm02a = TM01(wv, fs)
+Tm02a = TM02(wv, fs)
 ```
 
 Which should produce exactly the same results as before.
@@ -85,16 +85,18 @@ Maybe one of the most powerful/useful tools in this package is its ability
 of perform high-level wave-by-wave analysis. Instead of the traditional
 zero-crossings approach, it implements a iterative and procedural search for
 local minima and maxima on the data that should overcome the major shortcomings
-of the zero-crossing methods
+of the zero-crossing methods.
 
 ```python
 from pywavelearn.utils import peaklocalextremas
 mins, maxs = peaklocalextremas(wt, lookahead=10, delta=0.025)
 ```
+
 ![](image/wavebywave.png)
 
+The original function was borrowed from [here](https://gist.github.com/sixtenbe/1178136), but was modified several times since.
 
-We can calculate the similar statistics as before, but now from the
+We aslo can calculate the similar statistics as before, now from the
 raw record.
 
 ```python
@@ -154,7 +156,7 @@ omega = 2*pi/T
 k = wave_number(omega)
 
 # wave angular frequency
-omega  = frequency(k)
+omega = frequency(k)
 
 # wave celerity at any depth
 c = celerity(k,h)

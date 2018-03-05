@@ -1,25 +1,26 @@
 # PyWaveLearn
 Machine learning for wave scientists.
 
-This repository make available some useful tools for coastal scientists to
-handle common near-shore data with special focus on data mining,
+This repository makes available some useful tools for coastal scientists to
+handle common nearshore data with special focus on data mining,
 machine learning, and big data.
 
-For example, tasks such as detecting wave breaking becomes as easy as in
-[this example](notebooks/learn_wavebreaking.ipynb).
+The work presented here was originally designed as supporting material for the paper: **"A Machine Learning Algorithm for Tracking Remotely Sensed Waves in the Surf Zone"**.
 
-Applying some black magic [this](notebooks/learn_wavebreaking.ipynb) turns into [this](doc/image/predict_wavebreaking.gif):
+The main task handled here is to detect wave breaking, as explained in
+[this notebook](notebooks/learn_wavebreaking.ipynb), and show in this animation:
 
 ![breaking](doc/image/predict_wavebreaking.gif)
 
 
 # Installation:
 
-pywavelearn can only be installed from the source code.
+At the moment, pywavelearn can only be installed from the source code.
 
-First, make sure you have all the dependencies:
+We strongly recommend to use Anaconda (available from [here](https://www.anaconda.com/download/#linux)) to handle all the dependencies.
 
-Using conda:
+Make sure you have all the dependencies:
+
 ```bash
 # create a new environment
 conda create --name pwl python=3.6
@@ -38,10 +39,10 @@ conda install -c conda-forge colour-science
 conda install -c conda-forge opencv
 # science kits
 conda install scikit-image scikit-learn
-# heavy machine learning machinery
+# heavy machine learning machinery - not needed for the basic tools
 sudo apt-get install gcc gfortran
 conda install cython tensorflow keras
-# timeseries learning
+# timeseries learning - not needed for the basic tools
 pip install tslearn
 # a nice progress bar
 conda install -c conda-forge tqdm
@@ -49,9 +50,9 @@ conda install -c conda-forge tqdm
 pip install peakutils
 ```
 
-You may also want ffmpeg and some codecs to process raw video data.
+You may also want ffmpeg and some codecs to process raw video data (Ubuntu-only).
 ```bash
-sudo apt-get install ffmpeg ubuntu-restricted-extras
+sudo apt install ffmpeg ubuntu-restricted-extras
 ```
 
 Now, install pywavelearn:
@@ -110,8 +111,8 @@ The full help for these scripts can be seen using
 
 **TODOS:**
 
-1. Fix all PEP8 issues
-2. Add docs
+1. Improve docs
+2.
 
 
 <!-- # pwl.sensors
