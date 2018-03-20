@@ -1,4 +1,6 @@
-This module's main task is to provide a neat way to compare and
+# Learning colours
+
+This module's main task is to provide a easy way to compare and
 classify colours.
 
 Let's load an image and perform some tasks:
@@ -32,7 +34,7 @@ di = 100
 dj = 100
 I = img[i:i+di,j:j+dj,:]
 
-# get color bands
+# get colour bands
 snap_colours = np.vstack([I[:, :, 0].flatten(),
                           I[:, :, 1].flatten(),
                           I[:, :, 2].flatten()]).T
@@ -69,8 +71,8 @@ plt.show()
 ![](image/pwl_colour_a.png)
 
 
-A better way to assess the prediction would to use the concept of dominant
-colour instead of simply averaging the values. It can be done using the
+A better way to assess the prediction would be to use the concept of dominant
+colour instead of simply averaging the values. This can be done using the
 ```get_dominant_colour()``` function:
 
 ```python

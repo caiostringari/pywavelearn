@@ -1,9 +1,9 @@
 # Single frame rectification
 
-This module main function is to provide easy ways to rectify raw imagery, and
+This module's main function is to provide easy ways to rectify raw imagery and
 to extract timestacks.
 
-Assuming that we know the camera intrinsic and extrinsic parameters and the
+Given that the camera's intrinsic and extrinsic parameters and the
 coordinates of few GCPs in both metric and pixel coordinate systems, the
 rectification procedure looks something like this:
 
@@ -50,12 +50,11 @@ The resulting images should something like this:
 
 # Batch processing and time-stack extraction
 
-In order to rectify a series of frames and to extract timestacks, you can use the script [extract_timestack.py](../scripts/extract_timestack.py). It
-supports multi-processing via [multiprocessing](https://docs.python.org/2/library/multiprocessing.html)
+ Use the script [extract_timestack.py](../scripts/extract_timestack.py) to extract timestacks. It supports parallel processing via the [multiprocessing](https://docs.python.org/2/library/multiprocessing.html)
 module. Although this script was originally designed to extract timestacks,
 it also supports saving rectified frames to netCDF4 files.
 
-A simplified usage example would look like this:
+A simplified usage example is shown below:
 
 ```bash
 echo "# Running extract_timestack.py, please wait.."
@@ -119,9 +118,8 @@ The resulting timestack looks like this:
 ![](image/omb_timestack.jpg)
 
 **Notes:**
-1. Do not use this script on a regular laptop. Although it will run just fine,
-it was designed to run in a HPC facility.
+1. This script was not designed to run on standard laptops. Although it will run fine, you will probably run into out-of-memory problems. It ideally should be run in a HPC facility.
 2. This script should work with [PBS](http://www.arc.ox.ac.uk/content/pbs)
 out-of-the-box.
-3. For a full description of its powers, use
+3. For a full description of its functionality, use
 ```python extract_timestack.py --help```.

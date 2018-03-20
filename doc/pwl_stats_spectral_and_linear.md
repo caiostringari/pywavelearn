@@ -31,10 +31,10 @@ w2 = h2+(a2*np.sin(o2*t*delta))
 wt = w1+w2
 ```
 
-Our resulting wave should look like this:
+The resulting wave should look like this:
 ![](image/linwave.png)
 
-Let's calculate Power Spectrum Density (PSD):
+Let's calculate Power Spectral Density (PSD):
 
 ```python
 from pywavelearn.spectral import power_spectrum_density
@@ -44,8 +44,8 @@ f, psd = power_spectrum_density(wt, fs, window='hann', plot=True)
 
 # Statistical analysis from the spetrum
 
-Most of the statistics available in Holthuijsen (2007) - Waves in Oceanic
-and Coastal Waters were implemented in the **stats** module.
+Most of the statistics from in Holthuijsen (2007) - Waves in Oceanic
+and Coastal Waters are implemented in the **stats** module.
 
 For example, from the PSD, we can calculate wave heights and periods.
 
@@ -82,10 +82,8 @@ Which should produce exactly the same results as before.
 # Wave-by-wave statistical analysis
 
 Maybe one of the most powerful/useful tools in this package is its ability
-of perform high-level wave-by-wave analysis. Instead of the traditional
-zero-crossings approach, it implements a iterative and procedural search for
-local minima and maxima on the data that should overcome the major shortcomings
-of the zero-crossing methods.
+to perform high-level wave-by-wave analysis. Instead of the traditional
+zero-crossing approach, the method implemented here uses a iterative and procedural search for local minima and maxima on the data that should overcome the major shortcomings of the zero-crossing methods.
 
 ```python
 from pywavelearn.utils import peaklocalextremas
@@ -94,9 +92,10 @@ mins, maxs = peaklocalextremas(wt, lookahead=10, delta=0.025)
 
 ![](image/wavebywave.png)
 
-The original function was borrowed from [here](https://gist.github.com/sixtenbe/1178136), but was modified several times since.
+The original function was borrowed from [here](https://gist.github.com/sixtenbe/1178136), but has been modified to work
+better with water waves.
 
-We aslo can calculate the similar statistics as before, now from the
+We also can calculate the same statistics as before, now from the
 raw record.
 
 ```python
@@ -124,13 +123,13 @@ print("Significant wave height:", np.round(Hs, 1))
 print("Significant wave period:", np.round(Ts, 1))
 ```
 
-Resulting in:
+This results in:
 
 ```Significant wave height: 1.0```
 
 ```Significant wave period: 10.6```
 
-Which is quite similar to the spectral values obtained before.
+Which is quite similar to the spectral values obtained above.
 
 # Linear wave theory
 

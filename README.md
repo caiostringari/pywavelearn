@@ -80,7 +80,7 @@ in this package. It exploits the fact that unbroken waves, broken waves, and
 the shoreline have different colour signatures that can be used to "learn"
 information about these features.
 
-The [wave breaking detection](scripts/learn_wavebreaking) script shows the full
+The [wave breaking detection](scripts/learn_wavebreaking.py) script shows the full
 potential of the colour module.
 
 Usage examples are available [here](doc/pwl_colour.md).
@@ -88,9 +88,9 @@ Usage examples are available [here](doc/pwl_colour.md).
 
 # pwl.stats, pwl.spectral and pwl.linear
 
-In the modules **stats**, **spectral** and **linear** you will find tools to
-deal with the most common wave analysis problems. It provide ways to calculate
-wave heights, periods, spectral densities and most of the parameters derived
+The modules **stats**, **spectral** and **linear** contain tools to
+deal with the most common wave analysis problems. They provide ways to calculate
+wave heights, periods, spectral densities, and most of the parameters derived
 from the linear wave theory.
 
 Usage examples are available [here](doc/pwl_stats_spectral_and_linear.md).
