@@ -95,107 +95,7 @@ def crop(I, cropfile='crop.txt'):
         return I
 
 
-if __name__ == '__main__':
-
-    # Argument parser
-    parser = argparse.ArgumentParser()
-
-    # input Frame
-    parser.add_argument('--frame', '-i',
-                        nargs=1,
-                        action='store',
-                        dest='frame',
-                        required=True,
-                        help="Input frame.",)
-    # output netcdf
-    parser.add_argument('--output', '-o',
-                        nargs=1,
-                        action='store',
-                        dest='output',
-                        required=False,
-                        default=["geom.nc"],
-                        help="Output netCDF.",)
-    # crop file
-    parser.add_argument('--crop', '-crop',
-                        nargs=1,
-                        action='store',
-                        dest='crop',
-                        required=True,
-                        help="crop file.",)
-    # geometry
-    parser.add_argument('--gcpxyz', '-gcpxyz', '--xyz', '-xyz',
-                        nargs=1,
-                        action='store',
-                        dest='xyzfile',
-                        required=True,
-                        help="GCP XYZ file.",)
-    parser.add_argument('--gcpuv', '-gcpuv', '--uv', '-uv',
-                        nargs=1,
-                        action='store',
-                        dest='uvfile',
-                        required=True,
-                        help="""GCP UV file. Use get_gcp_uvcoords.py to generate
-a valid file.""",)
-    # camera matrix
-    parser.add_argument('--camera-matrix', '-cm',
-                        nargs=1,
-                        action='store',
-                        dest='camera',
-                        required=False,
-                        help="""Camera matrix file. Only used if undistort is
-True. Please use calibrate.py to generate a valid file.""",)
-    # horizon
-    parser.add_argument('--horizon', '--hor', '-horizon', '-hor',
-                        nargs=1,
-                        action='store',
-                        dest='horizon',
-                        required=False,
-                        default=[1000],
-                        help="""Maximum distance from origin to be
-included in the plot.""",)
-    # Projeciton height
-    parser.add_argument('--Z', '--z', '-Z', '-z',
-                        nargs=1,
-                        action='store',
-                        dest='Z',
-                        required=False,
-                        default=[0],
-                        help="""Real-world elevation on which the image
-should be projected.""",)
-    # Rotation
-    parser.add_argument('--theta', '-theta',
-                        nargs=1,
-                        action='store',
-                        dest='theta',
-                        required=False,
-                        default=[0],
-                        help="Rotation angle. Default is 0.0.",)
-    # Translation
-    parser.add_argument('--X', '--x', '-X', '-x',
-                        nargs=1,
-                        action='store',
-                        dest='X',
-                        required=False,
-                        default=[0],
-                        help="Translation in the x-direction",)
-    parser.add_argument('--Y', '--y', '-Y', '-y',
-                        nargs=1,
-                        action='store',
-                        dest='Y',
-                        required=False,
-                        default=[0],
-                        help="Translation in the x-direction",)
-    # Pixel window
-    parser.add_argument('--pixel-window', '--pxwin', '-pxwin', '-win',
-                        nargs=1,
-                        action='store',
-                        dest='pxwin',
-                        required=False,
-                        default=[2],
-                        help="Pixel window size. Default is 2.",)
-
-    # parse all the arguments
-    args = parser.parse_args()
+def main():
 
     img = os.path.isfile(args.frame[0])
     if img:
@@ -251,9 +151,14 @@ should be projected.""",)
     Xr, Yr = rotate_translate(X, Y, rotation=theta, translation=[xt, yt])
 
     # final arrays
-    Xc = Xr  # [horizon:,:]
-    Yc = Yr  # [horizon:,:]
-    Ic = Ir  # [horizon:,:,:]
+    if hor == -999:
+        Xc = Xr
+        Yc = Yr
+        Ic = Ir
+    else:
+        Xc = Xr[horizon:, :]
+        Yc = Yr[horizon:, :]
+        Ic = Ir[horizon:, :, :]
 
     # new image dimensions
     hc, wc = Ic.shape[:2]
@@ -279,17 +184,117 @@ should be projected.""",)
     # # auxiliary variables
     ds["bands"] = (('bands'), ["red", "green", "blue"])
     # write to file
-    ds.to_netcdf(args.output[0], format="NETCDF3_64BIT")
+    ds.to_netcdf(args.output[0])
 
-    # # plot
-    # fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 10))
-    # # pixel coords
-    # ax1.imshow(Ic)
-    # # metric coords
-    # im = ax2.pcolormesh(Xc, Yc, Ic.mean(axis=2))
-    # im.set_array(None)
-    # im.set_edgecolor('none')
-    # im.set_facecolor(construct_rgba_vector(Ic, n_alpha=0))
-    # ax2.set_aspect("equal")
-    # # show
-    # plt.show()
+
+if __name__ == '__main__':
+
+    # Argument parser
+    parser = argparse.ArgumentParser()
+
+    # input Frame
+    parser.add_argument(
+        '--frame', '-i',
+        nargs=1,
+        action='store',
+        dest='frame',
+        required=True,
+        help="Input frame.",)
+    # output netcdf
+    parser.add_argument(
+        '--output', '-o',
+        nargs=1,
+        action='store',
+        dest='output',
+        required=False,
+        default=["geom.nc"],
+        help="Output netCDF.",)
+    # crop file
+    parser.add_argument(
+        '--crop', '-crop',
+        nargs=1,
+        action='store',
+        dest='crop',
+        required=True,
+        help="crop file.",)
+    # geometry
+    parser.add_argument(
+        '--gcpxyz', '-gcpxyz', '--xyz', '-xyz',
+        nargs=1,
+        action='store',
+        dest='xyzfile',
+        required=True,
+        help="GCP XYZ file.",)
+    parser.add_argument(
+        '--gcpuv', '-gcpuv', '--uv', '-uv',
+        nargs=1,
+        action='store',
+        dest='uvfile',
+        required=True,
+        help="GCP UV file. Use get_gcp_uvcoords.py to generate a valid file.")
+    # camera matrix
+    parser.add_argument(
+        '--camera-matrix', '-cm',
+        nargs=1,
+        action='store',
+        dest='camera',
+        required=False,
+        help="Camera matrix file. Only used if undistort is True."
+             "Please use calibrate.py to generate a valid file.",)
+    # horizon
+    parser.add_argument(
+        '--horizon', '--hor', '-horizon', '-hor',
+        nargs=1,
+        action='store',
+        dest='horizon',
+        required=False,
+        default=[-999],
+        help="Maximum distance from origin to be included in the plot.",)
+    # Projeciton height
+    parser.add_argument(
+        '--Z', '--z', '-Z', '-z',
+        nargs=1,
+        action='store',
+        dest='Z',
+        required=False,
+        default=[0],
+        help="Real-world elevation on which the image should be projected.")
+    # Rotation
+    parser.add_argument(
+        '--theta', '-theta',
+        nargs=1,
+        action='store',
+        dest='theta',
+        required=False,
+        default=[0],
+        help="Rotation angle. Default is 0.0.",)
+    # Translation
+    parser.add_argument(
+        '--X', '--x', '-X', '-x',
+        nargs=1,
+        action='store',
+        dest='X',
+        required=False,
+        default=[0],
+        help="Translation in the x-direction",)
+    parser.add_argument(
+        '--Y', '--y', '-Y', '-y',
+        nargs=1,
+        action='store',
+        dest='Y',
+        required=False,
+        default=[0],
+        help="Translation in the x-direction",)
+    # Pixel window
+    parser.add_argument(
+        '--pixel-window', '--pxwin', '-pxwin', '-win',
+        nargs=1,
+        action='store',
+        dest='pxwin',
+        required=False,
+        default=[2],
+        help="Pixel window size. Default is 2.",)
+    # parse all the arguments
+    args = parser.parse_args()
+    # main call
+    main()
