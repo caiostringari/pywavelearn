@@ -17,7 +17,6 @@
 #
 # ------------------------------------------------------------------------
 # ------------------------------------------------------------------------
-from __future__ import print_function, division
 
 # System
 import os
@@ -40,8 +39,9 @@ import xarray as xr
 import pandas as pd
 
 # GIS
-import geopandas as gpd
-from shapely.geometry import Point
+# import geopandas as gpd
+# from shapely.geometry import Point
+import shapefile
 
 # Peak detection
 from peakutils import baseline, envelope, indexes
@@ -53,13 +53,14 @@ from colorspacious import deltaE
 # distances, fr checking only
 from scipy.spatial.distance import __all__ as scipy_dists
 
-# pywavelearning
-from pywavelearning.utils import ellapsedseconds, peaklocalextremas
-from pywavelearning.image import construct_rgba_vector, pixel_window
-from pywavelearning.colour import (get_dominant_colour,
-                                   classify_colour, colour_quantization)
+# pywavelearn
+from pywavelearn.utils import ellapsedseconds, peaklocalextremas
+from pywavelearn.image import construct_rgba_vector, pixel_window
+from pywavelearn.colour import (get_dominant_colour,
+                                classify_colour, colour_quantization)
 
 # Image processing
+from skimage import exposure
 from skimage.io import imsave
 from skimage.color import rgb2grey
 from skimage.filters import sobel_h
@@ -78,6 +79,7 @@ import warnings
 # glocal settintgs
 sns.set_context("paper", font_scale=1.5)
 sns.set_style("ticks", {'axes.linewidth': 2.0})
+
 warnings.filterwarnings("ignore")
 
 
@@ -344,7 +346,8 @@ def detect_breaking_events(time, crx_dist, rgb, crx_start=None,
                            resample_rule="100L", algorithm="peaks",
                            peak_detection="local_maxima", posterize=False,
                            ncolours=0, threshold=0.1, tswindow=11,
-                           denoise=True, pxwindow=3, mask_drysand=False):
+                           denoise=True, pxwindow=3, mask_drysand=False,
+                           fix_constrast=False):
     """
     Detect wave breaking events. Two main methods are implemented:
 
@@ -353,7 +356,7 @@ def detect_breaking_events(time, crx_dist, rgb, crx_start=None,
 
         Two peak detection methods are implemented:
 
-        1-a Local maxima. Uses peaklocalextremas() function from PyWaveLearning
+        1-a Local maxima. Uses peaklocalextremas() function from pywavelearn
                           to detect local maximas corresponding to wave
                           breaking.
 
@@ -366,7 +369,7 @@ def detect_breaking_events(time, crx_dist, rgb, crx_start=None,
         usually blue, sand is brownish and breaking waves are whiteish.
         Only peaks corresponding to wave breakin are append to the output
         structure. This is step done using classifiy_colour()
-        from PyWaveLearning.
+        from pywavelearn.
 
     2 - Edge detection: detect wave breaking as sharp edges in the timestack
 
@@ -486,6 +489,7 @@ def detect_breaking_events(time, crx_dist, rgb, crx_start=None,
 
     # mask sand - Not fully tested
     if mask_drysand:
+        print("  + >> masking dry sand [Experimental]")
         # calculate colour temperature
         cct = colour.xy_to_CCT_Hernandez1999(
             colour.XYZ_to_xy(colour.sRGB_to_XYZ(rgb/255)))
@@ -495,6 +499,12 @@ def detect_breaking_events(time, crx_dist, rgb, crx_start=None,
         i, j = np.where(cct == 0)
         rgb[i, j, :] = 0
 
+    if fix_constrast:
+        print("  + >> fixing contrast")
+        rgb = exposure.equalize_hist(rgb)
+        # rgb = (rgb-rgb.min())/(rgb.max()-rgb.min())*255
+
+
     # detect edges
     if algorithm == "edges" or algorithm == "edges_and_colour":
         print("  + >> calculating edges")
@@ -503,6 +513,8 @@ def detect_breaking_events(time, crx_dist, rgb, crx_start=None,
     # get pixel lines and RGB values at selected locations only
     if algorithm == "peaks" or algorithm == "colour":
         print("  + >> extracting cross-shore pixels")
+        # rescale
+        rgb = (rgb-rgb.min())/(rgb.max()-rgb.min())*255
         Y, crx_idx = get_analysis_locations(crx_dist, crx_start, crx_end)
         Time, PxInts, RGB = get_pixel_lines(time, rgb, crx_idx,
                                             resample_rule=resample_rule,
@@ -712,19 +724,39 @@ def write_outputs(path, basename, stk_secs, crx_dist, rgb, df_dbscan):
     # csv output
     df_dbscan.to_csv(os.path.join(path, basename+".csv"))
 
+    #
+    # FIONA IS TOO UNSTABLE TO USE IN PRODUCION
+    #
     # shapefile output
-    geometry = [Point(xy) for xy in zip(df_dbscan["time"],
-                                        df_dbscan["breaker"])]
-    crs = {'init': 'epsg:4326'}
-    geo_df = gpd.GeoDataFrame(df_dbscan, crs=crs, geometry=geometry)
-    geo_df.to_file(driver='ESRI Shapefile',
-                   filename=os.path.join(path, basename+".shp"))
+    # geometry = [Point(xy) for xy in zip(df_dbscan["time"],
+    # df_dbscan["breaker"])]
+    # crs = {'init': 'epsg:4326'}
+    # geo_df = gpd.GeoDataFrame(df_dbscan, crs=crs, geometry=geometry)
+    # geo_df.to_file(driver='ESRI Shapefile',
+    #                filename=os.path.join(path, basename+".shp"))
+    #
+    # # geojson output
+    # if os.path.isfile(os.path.join(path, basename+".geojson")):
+    #     os.remove(os.path.join(path, basename+".geojson"))
+    # geo_df.to_file(filename=os.path.join(path, basename+".geojson"),
+    #                driver="GeoJSON")
 
-    # geojson output
-    if os.path.isfile(os.path.join(path, basename+".geojson")):
-        os.remove(os.path.join(path, basename+".geojson"))
-    geo_df.to_file(filename=os.path.join(path, basename+".geojson"),
-                   driver="GeoJSON")
+    w = shapefile.Writer(shapeType=shapefile.POINT)
+    w.autoBalance = 1
+
+    w.field("time", "C")
+    w.field("breaker", "C")
+    w.field("wave", "C")
+
+    # loop over rows
+    for i, row in df_dbscan.iterrows():
+        # create the point geometry
+        w.point(float(row["time"]), float(row["breaker"]))
+        # add attribute data
+        w.record(row["time"], row["breaker"], row["wave"])
+    # dump to
+    w.save(os.path.join(path, basename+".shp"))
+
 
     # raster output
     # information for .points and .wld
@@ -918,14 +950,23 @@ def main():
                                              posterize=qnt_cl,
                                              ncolours=n_clrs,
                                              threshold=px_trsh,
-                                             colours=train_colours)
+                                             colours=train_colours,
+                                             fix_constrast=True)
     # DBSCAN
     print("  + >> clustering wave paths")
     df_dbscan = dbscan(times, breakers, dbs_eps, dbs_msp, dbs_mtc)
 
     # Outputs
     print("  + >> writting output")
-    write_outputs(outputto, basename, stk_secs, crx_dist, rgb, df_dbscan)
+    if os.path.isfile(os.path.join(outputto, basename+".csv")):
+        overwrite = input("  |- >> overwrite output?")
+        if overwrite[0] == "y":
+            write_outputs(outputto, basename, stk_secs,
+                          crx_dist, rgb, df_dbscan)
+        else:
+            print("  - >> warning: not writing outputs")
+    else:
+        write_outputs(outputto, basename, stk_secs, crx_dist, rgb, df_dbscan)
 
     if plot:
         print("  + >> plotting")
@@ -1011,29 +1052,38 @@ def main():
         sns.despine(ax=ax2, bottom=True)
         sns.despine(ax=ax1)
 
-        fig.tight_layout()
+        # fig.tight_layout()
 
         plt.show()
 
 
 if __name__ == '__main__':
-
     print("\nDetecting wave breaking, please wait...\n")
-
-    # Argument parser
-    parser = argparse.ArgumentParser()
-
-    # input data
-    parser.add_argument('--input', '-i',
-                        nargs=1,
-                        action='store',
-                        dest='input',
-                        help="Input json with analysis parameters.",
-                        required=True)
-    # parser
-    args = parser.parse_args()
-
-    # main
+    try:
+        inp = sys.argv[1]
+    except:
+        raise IOError("Usage: plot_wavepaths path/to/hyper.json")
+    if inp in ["-i", "--input"]:
+        # argument parser
+        parser = argparse.ArgumentParser()
+        # input data
+        parser.add_argument('--input', '-i',
+                            nargs=1,
+                            action='store',
+                            dest='input',
+                            help="JSON hyper parameter input file.",
+                            required=True)
+        args = parser.parse_args()
+    else:
+        # argument parser
+        parser = argparse.ArgumentParser()
+        # input data
+        parser.add_argument('--input', '-i',
+                            nargs=1,
+                            action='store',
+                            dest='input',
+                            help="JSON hyper parameter input file.",)
+        # parser
+        args = parser.parse_args(["-i",sys.argv[1]])
     main()
-
     print("\nMy work is done!\n")
