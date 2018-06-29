@@ -2,13 +2,12 @@
 # ------------------------------------------------------------------------
 #
 #
-# SCRIPT   : RBR2nc.py
-# POURPOSE : Read RBR PT data exported from ruskin and export a netcdf.
-#            Only text files for now
+# SCRIPT   : PT2X2nc.py
+# POURPOSE : Read PT2X data exported from Aqua4Plues and export a netCDF file
 # AUTHOR   : Caio Eadi Stringari
 # EMAIL    : Caio.EadiStringari@uon.edu.au
 #
-# v1.0     : 26/06/2018 [Caio Stringari]
+# v1.0     : 29/06/2018 [Caio Stringari]
 #
 #
 # ------------------------------------------------------------------------
@@ -27,44 +26,33 @@ import json
 import pandas as pd
 import xarray as xr
 
+from pywavelearn.sensors import PT2X_parser
+
+
 def main():
 
     print("\nConverting file, please wait...\n")
 
     # arguments
     inp = args.input[0]
-    met = args.metadata[0]
     out = args.output[0]
 
-    # read the file into a pandas dataframe
-    df = pd.read_csv(inp)
+    # read
+    df, met = PT2X_parser(inp)
 
-    # fix times
-    dates = [datetime.datetime.strptime(x, FMT) for x in df["Time"].values]
-    df.index = dates
-    df.index.name = "time"
-
-    # fix the dataframe
-    df = df.drop("Time", axis=1)
-
-    # fix the columns names
-    df.columns = [x.lower() for x in df.columns]
-
-    # to xarray
+    # convert
     ds = df.to_xarray()
 
-    # read metadata
+    # add metadata
     if met:
-        with open(met) as f:
-            meta = json.load(f)
-
         # add metadata to netcdf
-        ds.attrs = meta
+        ds.attrs = met
 
+    # print results
     print(ds)
 
+    # dump to file
     ds.to_netcdf(out)
-
     print("\nMy work is done!")
 
 
@@ -81,15 +69,6 @@ if __name__ == '__main__':
                         required=True,
                         help="Input text file exported from Ruskin.")
 
-    # input metadata
-    parser.add_argument('--metadata', '-m',
-                        nargs=1,
-                        action='store',
-                        default=[False],
-                        dest='metadata',
-                        required=False,
-                        help="Input metadata file exported from Ruskin.")
-
     # output netcdf
     parser.add_argument('--output', '-o',
                         nargs=1,
@@ -101,7 +80,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # data format
-    FMT = "%Y-%m-%d %H:%M:%S.%f"
 
     # main call
     main()
