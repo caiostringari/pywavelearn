@@ -1,4 +1,4 @@
-# PyWaveLearn
+# PyWaveLearn (PWL)
 Machine learning for wave enthusiasts.
 
 This repository makes available some useful tools for coastal scientists to
@@ -10,7 +10,7 @@ The work presented here was originally designed as supporting material for the p
 The accepted manuscript can be obtained [here]( https://www.sciencedirect.com/science/article/pii/S037838391830228X).
 
 The main task handled here is to detect wave breaking, as explained in
-[this notebook](notebooks/learn_wavebreaking.ipynb), and shown in this animation:
+[this notebook](notebooks/learn_wavebreaking.ipynb), and shown in this animation (click to play):
 
 [![](doc/thumb.jpg)](https://youtu.be/jtzU3QaO9Ys)
 
