@@ -59,7 +59,7 @@ import string
 # netcdf IO
 import xarray
 
-# scikit image
+# computer vision
 import cv2
 import skimage.io
 

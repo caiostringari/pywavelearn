@@ -4,6 +4,7 @@ import operator
 # pandas and numpy
 import numpy as np
 import pandas as pd
+import xarray as xr
 
 # random numbers
 import random
@@ -21,10 +22,12 @@ import scipy.spatial
 import datetime
 from matplotlib.dates import date2num, num2date
 
+from scipy.constants import g, pi
+
 
 def peaklocalextremas(y, lookahead=16, delta=0.1, x=None):
     """
-    Find local extremas (minimas and maximas) using a recursive algorithm
+    Find local extremas (minimas and maximas) using a recursive algorithm.
 
     ----------
     Args:
@@ -46,14 +49,12 @@ def peaklocalextremas(y, lookahead=16, delta=0.1, x=None):
         range(len(wave)).
 
     ----------
-    Returns:
+    Return:
         minimas, maximas (Mandatory [np.ndarray]) local mininas and maximas
         arrays.
     """
-
     max_peaks = []
     min_peaks = []
-
     dump = []   # Used to pop the first hit which almost always is false
 
     # input check
@@ -142,19 +143,18 @@ def peaklocalextremas(y, lookahead=16, delta=0.1, x=None):
 
 def ellapsedseconds(times):
     """
-    Auxiliary function to count how many (fractions) of seconds have passed
-    from the start of a stationary series.
+    Count how many (fractions) of seconds have passed from the begining.
+
+    Round to 3 decimal places no matter what.
 
     ----------
     Args:
         time [Mandatory (pandas.to_datetime(array)]: array of timestamps
 
     ----------
-    Returns:
+    Return:
         seconds [Mandatory (np.ndarray)]: array of ellapsed seconds.
-
     """
-
     seconds = []
     for t in range(len(times)):
         dt = (times[t]-times[0]).total_seconds()
@@ -165,8 +165,9 @@ def ellapsedseconds(times):
 
 def fixtime(times, timedelta=0):
     """
-    Fix time based on offsets. Always return a array of datetimes no matter
-    what kind of input.
+    Fix time based on offsets.
+
+    Always return a array of datetimes no matter what kind of input.
 
     ----------
     Args:
@@ -175,10 +176,9 @@ def fixtime(times, timedelta=0):
         timedelta [Optional (float)]: time offset in seconds.
 
     ----------
-    Returns:
+    Return:
         fixed [Mandatory (np.ndarray of datetimes)]: fixed times
     """
-
     fixed = []
     for time in pd.to_datetime(times):
         now = time.to_pydatetime()+datetime.timedelta(seconds=timedelta)
@@ -189,18 +189,18 @@ def fixtime(times, timedelta=0):
 
 def dffs(df):
     """
-    Auxiliary function do get sample frequency give a DataFrame
-    in which the indexses are temporal.
+    Get sample frequency give a DataFrame.
+
+    Indexes must be datetime-like.
 
     ----------
     Args:
         df [Mandatory (pd.DataFrame)]: dataframe with time info as indexes
 
     ----------
-    Returns:
+    Return:
         fs [Mandatory (float)]: sample frequency in Hz
     """
-
     times = fixtime(df.index.values)
 
     # TODO: raise an error if the indexes are not time values
@@ -212,7 +212,7 @@ def dffs(df):
 
 def timeindexes(times, t1, t2):
     """
-    Nearest neighbour search in time vectors
+    Search nearest neighbour  in datetime vectors.
 
     ----------
     Args:
@@ -221,10 +221,9 @@ def timeindexes(times, t1, t2):
         t1,t2 [Mandatory (datetime.datetime)]: start and end times for search
 
     ----------
-    Returns:
+    Return:
         i2,i2 [Mandatory (in)]: start and end indexes
     """
-
     # variables
     t = date2num(times)
     i = np.arange(0, len(t), 1)
@@ -240,8 +239,9 @@ def timeindexes(times, t1, t2):
 
 def cross_correlation_fft(a, b, mode='valid'):
     """
-    Cross correlation between two 1D signals. Similar to np.correlate,
-    but faster.
+    Cross correlation between two 1D signals.
+
+    Similar to np.correlate, but faster.
 
     ----------
     Args:
@@ -252,11 +252,10 @@ def cross_correlation_fft(a, b, mode='valid'):
         mode [Optional (string)]: mode option for np.fft.convolve()
 
     ----------
-    Returns:
+    Return:
         r [Madatory, (np.array)] Correlation coefficients.
                                  Shape depends on mode.
     """
-
     a = np.asarray(a)
     b = np.asarray(b)
     if np.prod(a.ndim) > 1 or np.prod(b.ndim) > 1:
@@ -275,8 +274,9 @@ def cross_correlation_fft(a, b, mode='valid'):
 
 def align_signals(a, b):
     """
-    Finds optimal delay to align two 1D signals maximizes
-    hstack((zeros(shift), b)) = a
+    Find optimal delay to align two 1D signals.
+
+    Maximizes hstack((zeros(shift), b)) = a
 
     ----------
     Args:
@@ -285,7 +285,7 @@ def align_signals(a, b):
         b [Mandatory (np.array)]: signal "b" array (1D)
 
     ----------
-    Returns:
+    Return:
         shift [Mandatory (np.array)]: Integer that maximizes
                                   hstack((zeros(shift), b)) - a = 0
     """
@@ -310,10 +310,10 @@ def align_signals(a, b):
 
 
 def find_nearest(target, val):
-    """ Archaic and brute force method to find the nearest indexes to a
-        given target cvalue in a inpute vector.
+    """
+    Archaic and brute force method to find the nearest indexes.
 
-        >> Use np.argmin() or scipy.KDTree() instead <<
+    Use np.argmin() or scipy.KDTree() instead <<
 
     ----------
     Args:
@@ -322,7 +322,7 @@ def find_nearest(target, val):
         val [Mandatory (float)]: value to search in "target"
 
     ----------
-    Returns:
+    Return:
         min_index [Mandatory (int)]: index of nearest value
 
         value [Mandatory (float, int)]: valeu of target[min_index]
@@ -334,7 +334,8 @@ def find_nearest(target, val):
 
 
 def normalize(data):
-    """ Normalize a vector by its variance.
+    """
+    Normalize a vector by its variance.
 
         >> use sklearn.preprocessing  functions instead <<
 
@@ -343,7 +344,7 @@ def normalize(data):
         data [Mandatory (np.array)]: 1d array of input data
 
     ----------
-    Returns:
+    Return:
         data [Mandatory (np.array)]: normalized data
     """
     variance = np.var(data)
@@ -352,14 +353,15 @@ def normalize(data):
 
 
 def nextpow2(i):
-    """ Gets the next power of 2 of a given number
+    """
+    Get the next power of 2 of a given number.
 
     ----------
     Args:
         i [Mandatory (integer)]: any integer
 
     ----------
-    Returns:
+    Return:
         n [Mandatory (interger)]: next power of 2 of i
     """
     n = 1
@@ -370,7 +372,8 @@ def nextpow2(i):
 
 def zeropad(x):
     """
-    Pads an input vector to the next power of two.
+    Pad an input vector to the next power of two.
+
     Very useful to speed up FFTs.
 
     ----------
@@ -378,7 +381,7 @@ def zeropad(x):
         x [Mandatory (np.array]: 1D np.array
 
     ----------
-    Returns:
+    Return:
         zeropad [Mandatory (np.array]: zero-paded array
     """
     N = len(x)
@@ -396,7 +399,7 @@ def str2bool(v):
         v [Mandatory (str]: any string
 
     ----------
-    Returns:
+    Return:
         bool [Mandatory (bool]: the boolean version of "v"
     """
     return v.lower() in ("yes", "true", "t", "1")
@@ -413,7 +416,7 @@ def chunkify(lst, n):
         n [Mandatory (in)]: number of parts to divide the input list
 
     ----------
-    Returns:
+    Return:
         lst [Mandatory (list of lists)]:
     """
     return [lst[i::n] for i in range(n)]
@@ -425,6 +428,7 @@ def kdtree(A, pt):
 
 
 def random_string(n):
+    """Generate random strings of lenght n."""
     return ''.join(random.choice(string.ascii_lowercase) for i in range(n))
 
 
@@ -444,7 +448,6 @@ def process_timestack(ds):
 
         rgb (Mandatory [array]): RGB representation shape [time,space,3].
     """
-
     # get coordinates
     x = ds["x"].values
     y = ds["y"].values
@@ -476,9 +479,8 @@ def intersection(x1, y1, x2, y2):
     x1, x2, y1, y2 (Mandatory [np.array]): arrays defining the curves
                                            (x, y) locations.
     ----------
-    Returns:
+    Return:
     x, y (Mandatory [np.array]): coordinate(s) of the curve intersections.
-
     """
     ii, jj = _rectangle_intersection_(x1, y1, x2, y2)
     n = len(ii)
@@ -544,3 +546,111 @@ def _rectangle_intersection_(x1, y1, x2, y2):
     ii, jj = np.nonzero(C1 & C2 & C3 & C4)
 
     return ii, jj
+
+
+def gamma_Power2011(h_tr):
+    """
+    Compute the water depth to wave height ratio using Power et al. (2011)
+    definition. Equation 8 in the paper.
+
+    ----------
+    Args:
+        h_tr (Mandatory [float or np.ndarray]): averaged trough depth
+                                                normalised by the offshore
+                                                wave height.
+                                                See paper for definition
+
+    Returns:
+        gamma (Mandatory [float]): predicted gamma.
+    """
+
+    # equation 8 in Power et al 2011
+    gamma = 2/(1+(20*h_tr))**0.75
+
+    return gamma
+
+
+def gamma_Battjes1985(H, T):
+    """
+    Compute the water depth to wave height ratio using Battjes and Stive (1985)
+    definition. Equation 9 in the paper.
+
+    ----------
+    Args:
+        H (Mandatory [float or np.ndarray]): Offshore wave height.
+
+        L (Mandatory [float or np.ndarray]): Offshore wave lenght.
+
+    Returns:
+        gamma (Mandatory [float or np.ndarray]): predicted gamma.
+    """
+
+    # equation 9 in Batjjes and Stive 1985
+    L = g*T**2/2*pi  # wave lenght
+    S = H/L  # wave steepnes
+    gamma = 0.5 + 0.4*np.tanh(33*S)
+
+    return gamma
+
+
+def read_pressure_data(fname, pt):
+    """
+    Read pressure data given a PT name and a input file.
+
+    ----------
+    Args:
+        fname (Mandatory [str]): path to the input file.
+
+        pt (Mandatory [str]): PT name.
+
+    ----------
+    Return:
+        pt_secs (Mandatory [np.array]): array of ellapsed seconds from the
+                                        record start.
+
+        pt_time (Mandatory [np.array]): array of datetimes.
+
+        pt_data (Mandatory [np.array]): array with pressure values.
+    """
+
+    # open dataset
+    ds_pres = xr.open_dataset(fname)
+
+    # figure out index
+    ncidx = np.where(ds_pres["pts"].values == pt)[0]
+
+    # load pressure and times
+    pt_data = np.squeeze(ds_pres["pressure"].values[ncidx, :])
+    pt_time = pd.to_datetime(ds_pres["time"].values).to_pydatetime()
+    pt_secs = ellapsedseconds(pt_time)
+
+    # close
+    ds_pres.close()
+
+    # return
+    return pt_secs, pt_time, pt_data
+
+
+def strictly_increasing(L):
+    """Check if a list is strictly increasing."""
+    return all(x < y for x, y in zip(L, L[1:]))
+
+
+def strictly_decreasing(L):
+    """Check if a list is strictly decreasing."""
+    return all(x > y for x, y in zip(L, L[1:]))
+
+
+def non_increasing(L):
+    """Check if a list is non increasing."""
+    return all(x >= y for x, y in zip(L, L[1:]))
+
+
+def non_decreasing(L):
+    """Check if a list is non decreasing."""
+    return all(x <= y for x, y in zip(L, L[1:]))
+
+
+def monotonic(L):
+    """Check if a list is monotonic."""
+    return non_increasing(L) or non_decreasing(L)
