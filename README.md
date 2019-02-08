@@ -1,16 +1,21 @@
 # PyWaveLearn
-Machine learning for wave scientists.
+Machine learning for wave enthusiasts.
 
 This repository makes available some useful tools for coastal scientists to
 handle common nearshore data with special focus on data mining,
 machine learning, and big data.
 
-The work presented here was originally designed as supporting material for the paper: **"A Machine Learning Algorithm for Tracking Remotely Sensed Waves in the Surf Zone"**.
+The work presented here was originally designed as supporting material for the paper: **"A Novel Machine Learning Algorithm for Tracking Remotely Sensed Waves in the Surf Zone"**.
+
+The accepted manuscript can be obtained [here]( https://www.sciencedirect.com/science/article/pii/S037838391830228X).
 
 The main task handled here is to detect wave breaking, as explained in
-[this notebook](notebooks/learn_wavebreaking.ipynb), and show in this animation:
+[this notebook](notebooks/learn_wavebreaking.ipynb), and shown in this animation:
 
-![breaking](doc/image/predict_wavebreaking.gif)
+[![](doc/thumb.jpg)](https://youtu.be/jtzU3QaO9Ys)
+
+<!-- ![breaking](doc/image/predict_wavebreaking.gif) -->
+
 
 
 # Installation:
