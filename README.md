@@ -35,8 +35,6 @@ source activate pwl
 conda install netCDF4 xarray
 # install seaborn for better plots
 conda install seaborn
-# geoprocessing
-conda install -c ioos geopandas
 # colour analysis
 pip install colorspacious
 conda install -c conda-forge colour-science
@@ -47,8 +45,6 @@ conda install scikit-image scikit-learn
 # heavy machine learning machinery - not needed for the basic tools
 sudo apt-get install gcc gfortran
 conda install cython tensorflow keras
-# timeseries learning - not needed for the basic tools
-pip install tslearn
 # a nice progress bar
 conda install -c conda-forge tqdm
 # peak detection
@@ -116,8 +112,8 @@ The full help for these scripts can be seen using
 
 **TODOS:**
 
-1. Improve docs
-2.
+1. Improve documentation
+2. Add continuous integration (CI)
 
 
 <!-- # pwl.sensors
