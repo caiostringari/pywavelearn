@@ -28,7 +28,7 @@ Make sure you have all the dependencies:
 
 ```bash
 # create a new environment
-conda create --name pwl python=3.6
+conda create --name pwl python=3.6  # netCDF4 DOES NOT work with python 3.7 yet
 # activate
 source activate pwl
 # install the netCDF4 and xarray
@@ -48,7 +48,7 @@ conda install cython tensorflow keras
 # a nice progress bar
 conda install -c conda-forge tqdm
 # peak detection
-pip install peakutils
+pip install peakutils simpledbf
 ```
 
 You may also want ffmpeg and some codecs to process raw video data (Ubuntu-only).
