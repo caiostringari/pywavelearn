@@ -39,7 +39,7 @@ conda install seaborn
 pip install colorspacious
 conda install -c conda-forge colour-science
 # OpenCV
-conda install -c conda-forge opencv
+conda install -c menpo opencv
 # science kits
 conda install scikit-image scikit-learn
 # heavy machine learning machinery - not needed for the basic tools
