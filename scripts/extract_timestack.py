@@ -641,6 +641,9 @@ if __name__ == '__main__':
     # homography
     H = ipwl.find_homography(UV, XYZ, K, z=z)
 
+    # reference homography
+    # if args.
+
     # hhunkify
     fchunks = chunkify(files, nprocs)
 

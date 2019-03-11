@@ -2,13 +2,6 @@ import numpy as np
 
 import pandas as pd
 
-# Least-square fits
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import (RANSACRegressor,
-                                  LinearRegression)
-
 from scipy import interpolate
 
 # Least-square fits
@@ -101,6 +94,7 @@ def optimal_wavepaths(clusters, min_wave_period=1, N=50, order=2,
     X0 = []  # offshore projections
     X1 = []  # optimal wave path
     T1 = []  # optimal wave path
+    L = []  # wave labels
     Tstart = []  # auxiliary variables
     Sstart = []  # auxiliary variables
 
@@ -139,6 +133,7 @@ def optimal_wavepaths(clusters, min_wave_period=1, N=50, order=2,
 
             X1.append(xpred)  # insiders
             T1.append(tpred)  # insider
+            L.append([cluster]*len(X1))
 
             # process only waves with T >= 1s
             dt = xpred.max()-xpred.min()
@@ -209,6 +204,6 @@ def optimal_wavepaths(clusters, min_wave_period=1, N=50, order=2,
         raise NotImplementedError("Duplicate removel not implemented yet.")
 
     if project:
-        return T0, X0, T1, X1
+        return T0, X0, T1, X1, L
     else:
-        return T1, X1
+        return T1, X1, L

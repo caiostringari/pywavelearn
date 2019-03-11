@@ -155,6 +155,7 @@ def ellapsedseconds(times):
     Return:
         seconds [Mandatory (np.ndarray)]: array of ellapsed seconds.
     """
+    times = pd.to_datetime(times).to_pydatetime()
     seconds = []
     for t in range(len(times)):
         dt = (times[t]-times[0]).total_seconds()
