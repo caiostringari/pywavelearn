@@ -12,7 +12,7 @@ The accepted manuscript can be obtained [here]( https://www.sciencedirect.com/sc
 The main task handled here is to detect wave breaking, as explained in
 [this notebook](notebooks/learn_wavebreaking.ipynb), and shown in this animation (click to play):
 
-[![](doc/thumb.jpg)](https://youtu.be/jtzU3QaO9Ys)
+[![](doc/thumb.jpg)](https://youtu.be/UTxsNOywCno)
 
 <!-- ![breaking](doc/image/predict_wavebreaking.gif) -->
 
@@ -45,10 +45,14 @@ conda install scikit-image scikit-learn
 # heavy machine learning machinery - not needed for the basic tools
 sudo apt-get install gcc gfortran
 conda install cython tensorflow keras
+pip install xgboost
 # a nice progress bar
 conda install -c conda-forge tqdm
 # peak detection
-pip install peakutils simpledbf
+pip install peakutils
+# dealig with shapefiles - Fiona is too unstable to be trusted...
+pip install pyshp simpledbf
+conda install pytables sqlalchemy
 ```
 
 You may also want ffmpeg and some codecs to process raw video data (Ubuntu-only).
