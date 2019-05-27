@@ -176,7 +176,7 @@ def optimal_wavepaths(clusters, min_wave_period=1, N=50, order=2,
                     zero_y = np.ones(zero_t.shape)*proj_max
                     ti, xi = intersection(tprojected, xprojected,
                                           zero_t, zero_y)
-                    if xi.size > 0:
+                    if xi.size > 1:
 
                         # slice
                         idx = np.argmin(np.abs(xprojected-xi))
