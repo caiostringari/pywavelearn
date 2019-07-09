@@ -655,3 +655,71 @@ def non_decreasing(L):
 def monotonic(L):
     """Check if a list is monotonic."""
     return non_increasing(L) or non_decreasing(L)
+
+
+def ismultimodal(x, xgrid, bandwidth=0.1, threshold=0.1, plot=False, **kwargs):
+    """
+    Compute if sample data is unimodal using gaussian kernel density funcions.
+
+    ----------
+    Args:
+        x [Mandatory (np.array)]: Array with water levels
+
+        xgrid [Mandatory (np.array)]: Array of values in which the KDE
+                                      is computed.
+
+        bandwidth [Mandatory (np.array)]: KDE bandwith. Note that scipy weights
+                                          its bandwidth by the covariance of
+                                          the input data. To make the results
+                                          comparable to the other methods,
+                                          we divide the bandwidth by the sample
+                                          standard deviation.
+
+        threshold [Optional (float)]: Threshold for peak detection.
+                                      Default is 0.1
+
+        plot [Optional (bool)]: If True, plot the results. Default is false
+
+        **kwargs [Optional (dict)]: scipy.stats.gausian_kde kwargs
+
+    ----------
+    Returns:
+        multimodal [Mandatory (bool): If True, distribution is multimodal.
+
+        npeaks [Mandatory (bool)]: number of peaks in the distribution.
+
+        peak_indexes [Mandatory (bool)]: peaks indexes.
+    """
+    #
+    from scipy.stats import gaussian_kde
+
+    # start multimodal as false
+    multimodal = False
+
+    # compute gaussian KDE
+    kde = gaussian_kde(x, bw_method=bandwidth / x.std(ddof=1),
+                       **kwargs).evaluate(xgrid)
+
+    # compute how many peaks in the distribution
+    root_mean_square = np.sqrt(np.sum(np.square(kde) / len(kde)))
+
+    # compute peak to average ratios
+    ratios = np.array([pow(x / root_mean_square, 2) for x in kde])
+
+    # apply first order logic
+    peaks = (
+        ratios > np.roll(ratios, 1)) & (ratios > np.roll(
+            ratios, -1)) & (ratios > threshold)
+
+    # optional: return peak indices
+    peak_indexes = []
+    for i in range(0, len(peaks)):
+        if peaks[i]:
+            peak_indexes.append(i)
+    npeaks = len(peak_indexes)
+
+    # if more than one peak, distribution is multimodal
+    if npeaks > 1:
+        multimodal = True
+
+    return multimodal, npeaks, peak_indexes
