@@ -8,6 +8,7 @@ __all__ = ['utils',
            'colour',
            'stats',
            'sensors',
-           'linear']
+           'linear',
+           'traking']
 
 __authors__ = ['Caio E. Stringari <Caio.EadiStringari@uon.edu.au>']
