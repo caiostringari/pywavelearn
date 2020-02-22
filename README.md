@@ -1,6 +1,10 @@
 # PyWaveLearn (PWL)
 Machine learning for wave enthusiasts.
 
+
+[![DOI](https://zenodo.org/badge/110203516.svg)](https://zenodo.org/badge/latestdoi/110203516)
+
+
 This repository makes available some useful tools for coastal scientists to
 handle common nearshore data with special focus on data mining,
 machine learning, and big data.
