@@ -15,7 +15,7 @@ setup(
         'numpy',
         'scikit-learn',
         'scikit-image',
-        # 'cv2', # not on pip =[
+        'opencv-python',
         'colour',
         'colorspacious',
         'seaborn',
