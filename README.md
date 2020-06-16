@@ -4,6 +4,7 @@ Machine learning for wave enthusiasts.
 
 [![DOI](https://zenodo.org/badge/110203516.svg)](https://zenodo.org/badge/latestdoi/110203516)
 
+**Warning**: This repository mainly contains legacy code developed during my PhD. Unfortunately, I currently do not have time to maintain this repository and most of the research presented here has already been supersede by more recent publications.
 
 This repository makes available some useful tools for coastal scientists to
 handle common nearshore data with special focus on data mining,
